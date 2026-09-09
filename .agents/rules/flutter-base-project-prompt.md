@@ -16,7 +16,7 @@ This rule serves as both the architectural standard for AI coding agents and the
 
 - **Clean Architecture with 3 Strict Layers**:
   - `presentation`: UI widgets, screens, and state holders only. Views observe reactive state and dispatch user events.
-  - `domain`: Pure Dart business logic (Entities, Repository Interfaces, UseCases). **Zero dependencies on Flutter, Dio, GetX, or third-party serialization frameworks.**
+  - `domain`: Pure Dart business logic (Entities, Repository Interfaces, UseCases). **Zero dependencies on Flutter, Dio, GetX, or third-party frameworks (pure Dart only; equatable and fpdart permitted).**
   - `data`: Infrastructure implementations (DataSources, DTO Models with `@JsonSerializable`, Repository Implementations).
 - **MVVM Pattern**:
   - View (`GetView<T>` or `GetWidget<T>`) → ViewModel (`GetxController`) → UseCase / Repository.
@@ -27,7 +27,7 @@ This rule serves as both the architectural standard for AI coding agents and the
   - **Open/Closed (O)**: Features extend via abstract repository contracts, never modifying core contracts.
   - **Liskov Substitution (L)**: Mock repositories (via `mocktail`) must be drop-in replacements for concrete implementations in all tests.
   - **Interface Segregation (I)**: Feature-specific abstract repositories (`AuthRepository`, `ProfileRepository`), never a monolithic `AppRepository`.
-  - **Dependency Inversion (D)**: High-level modules (Controllers, UseCases) depend exclusively on abstract interfaces, injected via GetX Bindings (`Get.lazyPut`, `Get.find`). Strictly **NO `get_it` or `injectable`**.
+  - **Dependency Inversion (D)**: High-level modules (Controllers, UseCases) depend exclusively on abstract interfaces, injected via GetX Bindings (`Get.lazyPut`, `Get.find`).
 
 ---
 
