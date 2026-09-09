@@ -31,77 +31,79 @@ This rule serves as both the architectural standard for AI coding agents and the
 
 ---
 
-## 2. Folder Structure
+## 2. Canonical Folder Structure
 
 ```
 lib/
-├── main.dart
+├── main.dart                       # App entrypoint, runs bootstrap & initializes environment
 ├── app/
-│   ├── app.dart                    # MaterialApp, theme, locale, routes
-│   ├── bootstrap.dart              # runApp + DI + Hive/env init, error zone
-│   └── flavors/                    # dev / staging / prod configs
+│   ├── app.dart                    # GetMaterialApp, ScreenUtilInit, theme, locale, routes
+│   ├── bootstrap.dart              # Async init: Hive, SecureStorage, global error zones
+│   └── flavors/                    # dev / staging / prod flavor configurations
 │
 ├── core/
+│   ├── bindings/                   # initial_binding.dart (permanent singletons: DioClient, storage)
 │   ├── constants/                  # app_constants.dart, api_endpoints.dart
-│   ├── bindings/                   # initial_binding.dart (global lazyPut: Dio,
-│   │                               #   storage services, core repos)
-│   ├── error/                      # failures.dart, exceptions.dart
+│   ├── error/                      # failures.dart (Equatable), exceptions.dart
+│   ├── localization/               # app_localizations.dart, l10n/ (app_en.arb, app_bn.arb)
 │   ├── network/
-│   │   ├── dio_client.dart
-│   │   ├── interceptors/
-│   │   │   ├── auth_interceptor.dart      # attaches token, handles refresh
-│   │   │   ├── logging_interceptor.dart
-│   │   │   ├── error_interceptor.dart     # maps DioException → Failure
-│   │   │   └── connectivity_interceptor.dart
-│   │   └── network_info.dart              # connectivity_plus check
-│   ├── storage/
-│   │   ├── secure_storage_service.dart    # flutter_secure_storage (tokens)
-│   │   └── local_cache_service.dart       # Hive/SharedPreferences (app data)
+│   │   ├── dio_client.dart         # Singleton Dio wrapper with base configuration
+│   │   ├── network_info.dart       # connectivity_plus checker interface & impl
+│   │   └── interceptors/
+│   │       ├── auth_interceptor.dart          # QueuedInterceptorsWrapper token refresh
+│   │       ├── logging_interceptor.dart       # Pretty log in debug mode only
+│   │       ├── error_interceptor.dart         # Maps DioException → typed Failure
+│   │       └── connectivity_interceptor.dart  # Short-circuits when offline
 │   ├── routing/
-│   │   ├── app_pages.dart                 # GetPage list (routes + bindings)
-│   │   └── route_names.dart               # AppRoutes (static const paths)
-│   ├── localization/
-│   │   ├── app_localizations.dart
-│   │   └── l10n/ (app_en.arb, app_bn.arb)
+│   │   ├── app_pages.dart          # List<GetPage> with routes, bindings, and middlewares
+│   │   └── route_names.dart        # Static const route paths (AppRoutes)
+│   ├── storage/
+│   │   ├── secure_storage_service.dart        # flutter_secure_storage (tokens only)
+│   │   └── local_cache_service.dart           # hive_flutter (user preferences/cache)
 │   ├── theme/
-│   │   ├── app_colors.dart
-│   │   ├── app_text_styles.dart
-│   │   ├── app_dimens.dart                # spacing/radius via .sp/.w/.h
-│   │   ├── app_theme.dart                 # ThemeData light/dark
-│   │   └── theme_provider.dart
+│   │   ├── app_colors.dart         # Semantic color tokens (light/dark)
+│   │   ├── app_dimens.dart         # Responsive dimensions, paddings, radii (.w, .h, .r)
+│   │   ├── app_text_styles.dart    # Standardized typography hierarchy (.sp)
+│   │   └── app_theme.dart          # ThemeData for light and dark modes
 │   ├── utils/
-│   │   ├── validators.dart
-│   │   ├── extensions/ (context_ext, string_ext, date_ext)
-│   │   ├── logger.dart
-│   │   └── result.dart                    # Either<Failure, T> (dartz/fpdart)
-│   └── widgets/                           # shared buttons, loaders, dialogs
+│   │   ├── extensions/             # context_ext.dart, string_ext.dart
+│   │   ├── logger.dart             # logger package wrapper
+│   │   └── validators.dart         # Form and input validation helpers
+│   └── widgets/                    # Reusable atomic UI (AppButton, AppTextField, AppLoader)
 │
 ├── features/
-│   └── auth/
+│   └── auth/                       # Reference feature vertical slice
 │       ├── data/
-│       │   ├── datasources/
-│       │   │   ├── auth_remote_data_source.dart
-│       │   │   └── auth_local_data_source.dart
-│       │   ├── models/                    # DTOs — @JsonSerializable(), part
-│       │   │                              #   'x_model.g.dart', extend Equatable
-│       │   └── repositories/
-│       │       └── auth_repository_impl.dart
+│       │   ├── datasources/        # auth_remote_data_source.dart, auth_local_data_source.dart
+│       │   ├── models/             # auth_response_model.dart (@JsonSerializable + Equatable)
+│       │   └── repositories/       # auth_repository_impl.dart
 │       ├── domain/
-│       │   ├── entities/
-│       │   ├── repositories/              # abstract AuthRepository
-│       │   └── usecases/                  # LoginUseCase, LogoutUseCase
+│       │   ├── entities/           # user_entity.dart (Pure Dart + Equatable)
+│       │   ├── repositories/       # auth_repository.dart (Abstract interface)
+│       │   └── usecases/           # login_usecase.dart, logout_usecase.dart
 │       └── presentation/
-│           ├── controllers/               # AuthController extends GetxController
-│           ├── bindings/                  # AuthBinding (lazyPut controller + deps)
-│           ├── screens/
-│           └── widgets/
+│           ├── bindings/           # auth_binding.dart (Get.lazyPut dependencies)
+│           ├── controllers/        # auth_controller.dart (GetxController with ViewState)
+│           ├── screens/            # login_screen.dart (GetView<AuthController>)
+│           └── widgets/            # Feature-specific widgets (login_form.dart, etc.)
 │
 └── shared/
-    └── models/                            # cross-feature entities (User, etc.)
+    └── models/                     # Cross-feature shared entities & DTOs
 ```
 
-Repeat the `features/<feature>/{data,domain,presentation}` pattern per feature
-(profile, home, settings, etc.).
+### Essential Root Configuration Files
+In addition to `lib/`, the starter project mandates these root files:
+- **`l10n.yaml`**: Root configuration for Flutter's official localization generator:
+  ```yaml
+  arb-dir: lib/core/localization/l10n
+  template-arb-file: app_en.arb
+  output-localization-file: app_localizations.dart
+  untranslated-messages-file: untranslated_messages.json
+  ```
+- **`analysis_options.yaml`**: Strict linter rules extending `very_good_analysis` or `flutter_lints` with strict-raw-types, strict-inference, and strict-casts enabled.
+- **`assets/`**: Structured asset directory containing `icons/`, `images/`, and `fonts/`.
+
+Repeat the `features/<feature>/{data,domain,presentation}` pattern for all subsequent features (profile, settings, etc.).
 
 ---
 
