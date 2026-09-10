@@ -118,14 +118,14 @@ Repeat the `features/<feature>/{data,domain,presentation}` pattern for all subse
   - Default JSON headers: `'Content-Type': 'application/json'`, `'Accept': 'application/json'`.
 - Interceptor execution pipeline strictly registered in order:
   1. `ConnectivityInterceptor`: Pre-flight check with `network_info.dart` (`connectivity_plus`). Short-circuits with `NetworkFailure` when offline before hitting the wire.
-  2. `AuthInterceptor`: Attaches `Authorization: Bearer <token>` from `SecureStorageService`. Uses `QueuedInterceptorsWrapper` to pause incoming requests during 401s, executes atomic token refresh, retries queued calls, or redirects to login on terminal auth failure.
+  2. `AuthInterceptor`: Attaches `Authorization: Bearer <token>` from `SecureStorageService`. Uses `QueuedInterceptorsWrapper` to pause incoming requests during 401s, executes atomic token refresh, retries queued calls, or triggers global auth state notification on terminal auth failure.
   3. `LoggingInterceptor`: Pretty request/response/error logs, strictly wrapped in `if (kDebugMode)` to ensure zero log leakage in release builds.
-  4. `ErrorInterceptor`: Maps uncaught `DioException` (timeouts, 400 bad requests, 403 forbidden, 404, 500 server errors, cancellation) into typed domain `Failure` instances with localized/human-readable error messages.
+  4. `ErrorInterceptor`: Maps uncaught transport errors into typed domain `Failure` instances attached to `DioException.error` (via `err.copyWith(error: failure)`) with localized/human-readable error messages.
 - **Architectural Boundary**: All network operations are confined to `RemoteDataSource` implementations. ViewModels and Repositories never call `Dio` directly. Repositories wrap data source responses into `Future<Either<Failure, T>>` using `fpdart`.
 
 ### 3.2 Race-Condition-Safe Token Refresh Blueprint
 
-Below is the required production blueprint for `AuthInterceptor`. It uses a secondary clean `Dio` instance without interceptors (`_refreshDio`) to prevent infinite recursive 401 loops:
+Below is the required production blueprint for `AuthInterceptor`. It uses a secondary clean `Dio` instance without interceptors (`_refreshDio`) to prevent infinite recursive 401 loops, checks for tokens already refreshed in-flight, excludes public endpoints, and decouples token refresh failure from replay failures:
 
 ```dart
 import 'package:dio/dio.dart';
@@ -137,10 +137,12 @@ import '../../../core/storage/secure_storage_service.dart';
 class AuthInterceptor extends QueuedInterceptorsWrapper {
   final SecureStorageService _storage;
   final Dio _refreshDio; // Clean Dio instance with NO interceptors attached
+  final void Function()? onAuthenticationExpired;
 
   AuthInterceptor({
     required SecureStorageService storage,
     required Dio refreshDio,
+    this.onAuthenticationExpired,
   })  : _storage = storage,
         _refreshDio = refreshDio;
 
@@ -162,12 +164,36 @@ class AuthInterceptor extends QueuedInterceptorsWrapper {
     ErrorInterceptorHandler handler,
   ) async {
     if (err.response?.statusCode == 401) {
+      // 1. Skip refresh logic for public or auth endpoints to prevent loops
+      if (err.requestOptions.path == ApiEndpoints.login) {
+        return handler.next(err);
+      }
+
+      // 2. In-flight race check: verify if another request already refreshed the token
+      final currentAccessToken = await _storage.getAccessToken();
+      final sentToken = err.requestOptions.headers['Authorization'] as String?;
+      if (currentAccessToken != null &&
+          currentAccessToken.isNotEmpty &&
+          sentToken != 'Bearer $currentAccessToken') {
+        // Token was already refreshed by a prior concurrent request; replay immediately
+        final retryOptions = err.requestOptions;
+        retryOptions.headers['Authorization'] = 'Bearer $currentAccessToken';
+        try {
+          final cloneResponse = await _refreshDio.fetch(retryOptions);
+          return handler.resolve(cloneResponse);
+        } on DioException catch (retryErr) {
+          return handler.next(retryErr);
+        }
+      }
+
       final refreshToken = await _storage.getRefreshToken();
       if (refreshToken == null || refreshToken.isEmpty) {
         await _handleLogout();
         return handler.next(err);
       }
 
+      // 3. Block 1: Atomic token refresh execution
+      String newAccessToken;
       try {
         // QueuedInterceptorsWrapper automatically locks and queues concurrent requests
         final response = await _refreshDio.post<Map<String, dynamic>>(
@@ -176,10 +202,10 @@ class AuthInterceptor extends QueuedInterceptorsWrapper {
         );
 
         final data = response.data;
-        final newAccessToken = data?['accessToken'] as String?;
+        final token = data?['accessToken'] as String?;
         final newRefreshToken = data?['refreshToken'] as String?;
 
-        if (newAccessToken == null || newAccessToken.isEmpty) {
+        if (token == null || token.isEmpty) {
           throw DioException(
             requestOptions: err.requestOptions,
             error: 'Invalid refresh token response payload',
@@ -187,18 +213,23 @@ class AuthInterceptor extends QueuedInterceptorsWrapper {
         }
 
         await _storage.saveTokens(
-          accessToken: newAccessToken,
+          accessToken: token,
           refreshToken: newRefreshToken ?? refreshToken,
         );
-
-        // Update failed request header and replay using clean Dio instance
-        final retryOptions = err.requestOptions;
-        retryOptions.headers['Authorization'] = 'Bearer $newAccessToken';
-        final cloneResponse = await _refreshDio.fetch(retryOptions);
-        return handler.resolve(cloneResponse);
+        newAccessToken = token;
       } catch (refreshError) {
         await _handleLogout();
         return handler.next(err);
+      }
+
+      // 4. Block 2: Replay original request (decoupled from refresh error handling)
+      final retryOptions = err.requestOptions;
+      retryOptions.headers['Authorization'] = 'Bearer $newAccessToken';
+      try {
+        final cloneResponse = await _refreshDio.fetch(retryOptions);
+        return handler.resolve(cloneResponse);
+      } on DioException catch (retryErr) {
+        return handler.next(retryErr);
       }
     }
     handler.next(err);
@@ -206,17 +237,33 @@ class AuthInterceptor extends QueuedInterceptorsWrapper {
 
   Future<void> _handleLogout() async {
     await _storage.clearTokens();
-    getx.Get.offAllNamed(AppRoutes.login);
+    // Trigger global auth state notification / event callback rather than hard routing
+    if (onAuthenticationExpired != null) {
+      onAuthenticationExpired!();
+    } else {
+      // Fallback: Notify router or navigate to login
+      getx.Get.offAllNamed(AppRoutes.login);
+    }
   }
 }
 ```
 
 ### 3.3 ErrorInterceptor Blueprint
-Maps transport-level `DioException` types to domain `Failure` contracts:
+Maps transport-level `DioException` types to domain `Failure` contracts attached to `DioException.error` using `err.copyWith(error: mappedFailure)` so `ErrorInterceptorHandler` contracts remain strictly type-safe with Dio:
 - `DioExceptionType.connectionTimeout`, `sendTimeout`, `receiveTimeout` → `NetworkFailure('Connection timed out. Please try again.')`
 - `DioExceptionType.connectionError` → `NetworkFailure('No internet connection.')`
 - `DioExceptionType.badResponse` → Extracts backend message or returns `ServerFailure('Server error (${statusCode})')`
 - `DioExceptionType.cancel` → Ignored or mapped to custom `CancelledFailure`
+
+Example implementation pattern in `ErrorInterceptor.onError`:
+```dart
+@override
+void onError(DioException err, ErrorInterceptorHandler handler) {
+  final failure = _mapDioExceptionToFailure(err);
+  handler.next(err.copyWith(error: failure));
+}
+```
+`RemoteDataSource` implementations throw `DioException` (or custom data exceptions), which `Repository` implementations catch and map to `Left(failure)`.
 
 ---
 
