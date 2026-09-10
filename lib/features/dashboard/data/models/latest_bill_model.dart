@@ -6,6 +6,7 @@ part 'latest_bill_model.g.dart';
 
 @JsonSerializable()
 class LatestBillModel extends Equatable {
+  @JsonKey(fromJson: _idFromJson)
   final int id;
 
   @JsonKey(name: 'bill_no')
@@ -14,13 +15,21 @@ class LatestBillModel extends Equatable {
   @JsonKey(name: 'billing_month')
   final String billingMonth;
 
-  @JsonKey(name: 'total_amount')
+  @JsonKey(name: 'total_amount', fromJson: _stringFromDynamic)
   final String totalAmount;
 
   @JsonKey(name: 'due_date')
   final String dueDate;
 
   final String status;
+
+  static int _idFromJson(Object? value) {
+    if (value is int) return value;
+    return int.tryParse(value?.toString() ?? '') ?? 0;
+  }
+
+  static String _stringFromDynamic(Object? value) =>
+      value?.toString() ?? '0.00';
 
   const LatestBillModel({
     required this.id,

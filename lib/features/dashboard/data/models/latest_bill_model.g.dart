@@ -8,10 +8,10 @@ part of 'latest_bill_model.dart';
 
 LatestBillModel _$LatestBillModelFromJson(Map<String, dynamic> json) =>
     LatestBillModel(
-      id: (json['id'] as num).toInt(),
+      id: LatestBillModel._idFromJson(json['id']),
       billNo: json['bill_no'] as String,
       billingMonth: json['billing_month'] as String,
-      totalAmount: json['total_amount'] as String,
+      totalAmount: LatestBillModel._stringFromDynamic(json['total_amount']),
       dueDate: json['due_date'] as String,
       status: json['status'] as String,
     );

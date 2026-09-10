@@ -8,7 +8,7 @@ part of 'notice_snippet_model.dart';
 
 NoticeSnippetModel _$NoticeSnippetModelFromJson(Map<String, dynamic> json) =>
     NoticeSnippetModel(
-      id: (json['id'] as num).toInt(),
+      id: NoticeSnippetModel._idFromJson(json['id']),
       title: json['title'] as String,
       content: json['content'] as String?,
       publishedAt: json['published_at'] as String,

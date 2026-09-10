@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:fpdart/fpdart.dart';
+import '../../../../core/error/exceptions.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../shared/domain/entities/flat_entity.dart';
 import '../../domain/entities/dashboard_data_entity.dart';
@@ -23,6 +24,8 @@ class DashboardRepositoryImpl implements DashboardRepository {
           ? e.error! as Failure
           : ServerFailure(e.message ?? 'Server error occurred');
       return Left(failure);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
@@ -38,6 +41,8 @@ class DashboardRepositoryImpl implements DashboardRepository {
           ? e.error! as Failure
           : ServerFailure(e.message ?? 'Server error occurred');
       return Left(failure);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }

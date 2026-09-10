@@ -27,10 +27,10 @@ class DashboardRemoteDataSourceImpl implements DashboardRemoteDataSource {
     }
 
     final data = body['data'];
-    if (data is Map<String, dynamic>) {
-      return DashboardDataModel.fromJson(data);
+    if (data is Map<dynamic, dynamic>) {
+      return DashboardDataModel.fromJson(Map<String, dynamic>.from(data));
     }
-    return DashboardDataModel.fromJson(body);
+    return DashboardDataModel.fromJson(Map<String, dynamic>.from(body));
   }
 
   @override
@@ -47,7 +47,8 @@ class DashboardRemoteDataSourceImpl implements DashboardRemoteDataSource {
     final data = body['data'];
     if (data is List) {
       return data
-          .map((e) => FlatModel.fromJson(e as Map<String, dynamic>))
+          .whereType<Map<dynamic, dynamic>>()
+          .map((e) => FlatModel.fromJson(Map<String, dynamic>.from(e)))
           .toList();
     }
     return const [];

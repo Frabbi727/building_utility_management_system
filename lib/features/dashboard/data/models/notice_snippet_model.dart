@@ -6,9 +6,15 @@ part 'notice_snippet_model.g.dart';
 
 @JsonSerializable()
 class NoticeSnippetModel extends Equatable {
+  @JsonKey(fromJson: _idFromJson)
   final int id;
   final String title;
   final String? content;
+
+  static int _idFromJson(Object? value) {
+    if (value is int) return value;
+    return int.tryParse(value?.toString() ?? '') ?? 0;
+  }
 
   @JsonKey(name: 'published_at')
   final String publishedAt;

@@ -125,7 +125,38 @@ void main() {
       verify(() => mockRemoteDataSource.getResidentFlats()).called(1);
     });
 
-    test('returns Left(ServerFailure) on exception', () async {
+    test('returns Left(Failure) when DioException carries custom Failure', () async {
+      const customFailure = AuthFailure('Unauthorized');
+      when(() => mockRemoteDataSource.getResidentFlats()).thenThrow(
+        DioException(
+          requestOptions: RequestOptions(path: '/resident/flats'),
+          error: customFailure,
+        ),
+      );
+
+      final result = await repository.getResidentFlats();
+
+      expect(result.isLeft(), isTrue);
+      result.fold(
+        (failure) => expect(failure, equals(customFailure)),
+        (_) => fail('Should not be Right'),
+      );
+    });
+
+    test('returns Left(ServerFailure) on ServerException', () async {
+      when(() => mockRemoteDataSource.getResidentFlats())
+          .thenThrow(const ServerException('Database unavailable'));
+
+      final result = await repository.getResidentFlats();
+
+      expect(result.isLeft(), isTrue);
+      result.fold(
+        (failure) => expect(failure.message, equals('Database unavailable')),
+        (_) => fail('Should not be Right'),
+      );
+    });
+
+    test('returns Left(ServerFailure) on generic exception', () async {
       when(() => mockRemoteDataSource.getResidentFlats())
           .thenThrow(Exception('Flats fetch failed'));
 

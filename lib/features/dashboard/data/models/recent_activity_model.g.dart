@@ -8,10 +8,10 @@ part of 'recent_activity_model.dart';
 
 RecentActivityModel _$RecentActivityModelFromJson(Map<String, dynamic> json) =>
     RecentActivityModel(
-      id: (json['id'] as num).toInt(),
+      id: RecentActivityModel._idFromJson(json['id']),
       type: json['type'] as String,
       title: json['title'] as String,
-      amount: json['amount'] as String,
+      amount: RecentActivityModel._stringFromDynamic(json['amount']),
       date: json['date'] as String,
       status: json['status'] as String,
     );

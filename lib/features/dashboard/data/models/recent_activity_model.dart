@@ -6,12 +6,22 @@ part 'recent_activity_model.g.dart';
 
 @JsonSerializable()
 class RecentActivityModel extends Equatable {
+  @JsonKey(fromJson: _idFromJson)
   final int id;
   final String type;
   final String title;
+  @JsonKey(fromJson: _stringFromDynamic)
   final String amount;
   final String date;
   final String status;
+
+  static int _idFromJson(Object? value) {
+    if (value is int) return value;
+    return int.tryParse(value?.toString() ?? '') ?? 0;
+  }
+
+  static String _stringFromDynamic(Object? value) =>
+      value?.toString() ?? '0.00';
 
   const RecentActivityModel({
     required this.id,

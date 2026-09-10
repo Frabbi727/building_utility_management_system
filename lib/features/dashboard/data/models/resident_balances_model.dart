@@ -6,17 +6,20 @@ part 'resident_balances_model.g.dart';
 
 @JsonSerializable()
 class ResidentBalancesModel extends Equatable {
-  @JsonKey(name: 'total_due')
+  @JsonKey(name: 'total_due', fromJson: _stringFromDynamic)
   final String totalDue;
 
-  @JsonKey(name: 'advance_held')
+  @JsonKey(name: 'advance_held', fromJson: _stringFromDynamic)
   final String advanceHeld;
 
-  @JsonKey(name: 'current_month_charges')
+  @JsonKey(name: 'current_month_charges', fromJson: _stringFromDynamic)
   final String currentMonthCharges;
 
-  @JsonKey(name: 'arrears')
+  @JsonKey(name: 'arrears', fromJson: _stringFromDynamic)
   final String arrears;
+
+  static String _stringFromDynamic(Object? value) =>
+      value?.toString() ?? '0.00';
 
   const ResidentBalancesModel({
     required this.totalDue,

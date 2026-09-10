@@ -138,5 +138,55 @@ void main() {
       expect(entity.activeNotices, isEmpty);
       expect(entity.recentActivity, isEmpty);
     });
+
+    test('Models defensively parse numeric and string IDs/amounts', () {
+      final numericBalances = ResidentBalancesModel.fromJson(const {
+        'total_due': 5000,
+        'advance_held': 100.5,
+        'current_month_charges': 4900,
+        'arrears': 0,
+      });
+      expect(numericBalances.totalDue, '5000');
+      expect(numericBalances.advanceHeld, '100.5');
+
+      final stringIdBill = LatestBillModel.fromJson(const {
+        'id': '42',
+        'bill_no': 'B-1',
+        'billing_month': '2026-09',
+        'total_amount': 2500,
+        'due_date': '2026-09-20',
+        'status': 'unpaid',
+      });
+      expect(stringIdBill.id, 42);
+      expect(stringIdBill.totalAmount, '2500');
+
+      final stringIdNotice = NoticeSnippetModel.fromJson(const {
+        'id': '99',
+        'title': 'Test Notice',
+        'published_at': '2026-09-10',
+      });
+      expect(stringIdNotice.id, 99);
+
+      final stringIdActivity = RecentActivityModel.fromJson(const {
+        'id': '101',
+        'type': 'payment',
+        'title': 'Pay',
+        'amount': 300,
+        'date': '2026-09-09',
+        'status': 'completed',
+      });
+      expect(stringIdActivity.id, 101);
+      expect(stringIdActivity.amount, '300');
+    });
+
+    test('Models support toJson serialization and Equatable equality', () {
+      final model = DashboardDataModel.fromJson(dashboardJson);
+      final json = model.toJson();
+      final roundTrip = DashboardDataModel.fromJson(json);
+
+      expect(roundTrip, equals(model));
+      expect(model.balances.props, isNotEmpty);
+      expect(model.latestBill?.props, isNotEmpty);
+    });
   });
 }
