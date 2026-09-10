@@ -11,19 +11,11 @@ import 'package:building_utility_management_system/shared/services/flat_context_
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:get/get.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockAuthRemoteDataSource extends Mock implements AuthRemoteDataSource {}
 class MockAuthLocalDataSource extends Mock implements AuthLocalDataSource {}
-class MockFlatContextService extends Mock implements FlatContextService {
-  @override
-  InternalFinalCallback<void> get onStart =>
-      InternalFinalCallback<void>(callback: () {});
-  @override
-  InternalFinalCallback<void> get onDelete =>
-      InternalFinalCallback<void>(callback: () {});
-}
+class MockFlatContextService extends Mock implements FlatContextService {}
 
 void main() {
   late MockAuthRemoteDataSource mockRemoteDataSource;
@@ -32,7 +24,6 @@ void main() {
   late AuthRepositoryImpl repository;
 
   setUp(() {
-    Get.reset();
     mockRemoteDataSource = MockAuthRemoteDataSource();
     mockLocalDataSource = MockAuthLocalDataSource();
     mockFlatContextService = MockFlatContextService();
@@ -41,10 +32,6 @@ void main() {
       localDataSource: mockLocalDataSource,
       flatContextService: mockFlatContextService,
     );
-  });
-
-  tearDown(() {
-    Get.reset();
   });
 
   const email = 'test@example.com';
@@ -96,29 +83,6 @@ void main() {
     verify(
       () => mockFlatContextService.initializeFlats([flatModel.toEntity()]),
     ).called(1);
-  });
-
-  test('login discovers FlatContextService via Get.find when not passed in constructor', () async {
-    Get.put<FlatContextService>(mockFlatContextService);
-    final repoWithoutInjectedFcs = AuthRepositoryImpl(
-      remoteDataSource: mockRemoteDataSource,
-      localDataSource: mockLocalDataSource,
-    );
-
-    when(() => mockRemoteDataSource.login(email: email, password: password))
-        .thenAnswer((_) async => responseModel);
-    when(
-      () => mockLocalDataSource.saveTokens(
-        accessToken: responseModel.token,
-        refreshToken: responseModel.token,
-      ),
-    ).thenAnswer((_) async {});
-    when(() => mockFlatContextService.initializeFlats(any())).thenReturn(null);
-
-    final result = await repoWithoutInjectedFcs.login(email: email, password: password);
-
-    expect(result.isRight(), isTrue);
-    verify(() => mockFlatContextService.initializeFlats([flatModel.toEntity()])).called(1);
   });
 
   test('login succeeds without FlatContextService when none is registered', () async {

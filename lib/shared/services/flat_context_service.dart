@@ -33,8 +33,12 @@ class FlatContextService extends GetxService {
     cacheService.putInt(activeFlatKey, flat.id);
   }
 
+  int? get activeFlatId => selectedFlat.value?.id;
+  bool get hasSelectedFlat => selectedFlat.value != null;
+
   void clear() {
     selectedFlat.value = null;
     availableFlats.clear();
+    cacheService.delete(activeFlatKey);
   }
 }

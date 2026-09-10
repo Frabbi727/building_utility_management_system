@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:get/get.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../shared/services/flat_context_service.dart';
@@ -31,10 +30,8 @@ class AuthRepositoryImpl implements AuthRepository {
         accessToken: response.token,
         refreshToken: response.token,
       );
-      final fcs = flatContextService ??
-          (Get.isRegistered<FlatContextService>() ? Get.find<FlatContextService>() : null);
-      if (fcs != null) {
-        fcs.initializeFlats(response.flats.map((f) => f.toEntity()).toList());
+      if (flatContextService != null) {
+        flatContextService!.initializeFlats(response.flats.map((f) => f.toEntity()).toList());
       }
       return Right(response.user.toEntity());
     } on CacheException catch (e) {

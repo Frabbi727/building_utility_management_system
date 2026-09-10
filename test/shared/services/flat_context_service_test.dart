@@ -29,6 +29,7 @@ void main() {
     mockCache = MockLocalCacheService();
     when(() => mockCache.getInt(any())).thenReturn(null);
     when(() => mockCache.putInt(any(), any())).thenAnswer((_) async {});
+    when(() => mockCache.delete(any())).thenAnswer((_) async {});
     service = FlatContextService(cacheService: mockCache);
   });
 
@@ -37,6 +38,8 @@ void main() {
 
     expect(service.availableFlats.length, 2);
     expect(service.selectedFlat.value, equals(flat1));
+    expect(service.activeFlatId, 1);
+    expect(service.hasSelectedFlat, isTrue);
     verify(() => mockCache.putInt('active_flat_id', 1)).called(1);
   });
 
@@ -45,6 +48,8 @@ void main() {
     service.initializeFlats([flat1, flat2]);
 
     expect(service.selectedFlat.value, equals(flat2));
+    expect(service.activeFlatId, 2);
+    expect(service.hasSelectedFlat, isTrue);
   });
 
   test('initialize falls back to first flat if cached id is not in list', () {
@@ -60,6 +65,8 @@ void main() {
 
     expect(service.availableFlats.isEmpty, isTrue);
     expect(service.selectedFlat.value, isNull);
+    expect(service.activeFlatId, isNull);
+    expect(service.hasSelectedFlat, isFalse);
   });
 
   test('selectFlat updates selectedFlat and writes to cache', () {
@@ -67,16 +74,21 @@ void main() {
     service.selectFlat(flat2);
 
     expect(service.selectedFlat.value, equals(flat2));
+    expect(service.activeFlatId, 2);
     verify(() => mockCache.putInt('active_flat_id', 2)).called(1);
   });
 
-  test('clear resets selectedFlat to null and empties availableFlats', () {
+  test('clear resets selectedFlat, empties availableFlats, and deletes cache key', () {
+    when(() => mockCache.delete('active_flat_id')).thenAnswer((_) async {});
     service.initializeFlats([flat1, flat2]);
     expect(service.selectedFlat.value, equals(flat1));
 
     service.clear();
 
     expect(service.selectedFlat.value, isNull);
+    expect(service.activeFlatId, isNull);
+    expect(service.hasSelectedFlat, isFalse);
     expect(service.availableFlats.isEmpty, isTrue);
+    verify(() => mockCache.delete('active_flat_id')).called(1);
   });
 }

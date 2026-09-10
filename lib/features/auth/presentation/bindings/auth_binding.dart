@@ -4,6 +4,7 @@ import '../../../../core/storage/secure_storage_service.dart';
 import '../../data/datasources/auth_local_data_source.dart';
 import '../../data/datasources/auth_remote_data_source.dart';
 import '../../data/repositories/auth_repository_impl.dart';
+import '../../../../shared/services/flat_context_service.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../domain/usecases/login_usecase.dart';
 import '../controllers/auth_controller.dart';
@@ -21,6 +22,7 @@ class AuthBinding extends Bindings {
       () => AuthRepositoryImpl(
         remoteDataSource: Get.find<AuthRemoteDataSource>(),
         localDataSource: Get.find<AuthLocalDataSource>(),
+        flatContextService: Get.find<FlatContextService>(),
       ),
     );
     Get.lazyPut<LoginUseCase>(() => LoginUseCase(repository: Get.find<AuthRepository>()));

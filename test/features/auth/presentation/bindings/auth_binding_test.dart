@@ -12,22 +12,35 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:mocktail/mocktail.dart';
 
+import 'package:building_utility_management_system/shared/services/flat_context_service.dart';
+
 class MockDioClient extends Mock implements DioClient {}
 class MockSecureStorageService extends Mock implements SecureStorageService {}
+class MockFlatContextService extends Mock implements FlatContextService {
+  @override
+  InternalFinalCallback<void> get onStart =>
+      InternalFinalCallback<void>(callback: () {});
+  @override
+  InternalFinalCallback<void> get onDelete =>
+      InternalFinalCallback<void>(callback: () {});
+}
 
 void main() {
   late MockDioClient mockDioClient;
   late MockSecureStorageService mockSecureStorage;
+  late MockFlatContextService mockFlatContextService;
   late AuthBinding binding;
 
   setUp(() {
     Get.reset();
     mockDioClient = MockDioClient();
     mockSecureStorage = MockSecureStorageService();
+    mockFlatContextService = MockFlatContextService();
     when(() => mockDioClient.dio).thenReturn(Dio());
 
     Get.put<DioClient>(mockDioClient);
     Get.put<SecureStorageService>(mockSecureStorage);
+    Get.put<FlatContextService>(mockFlatContextService);
     binding = AuthBinding();
   });
 
