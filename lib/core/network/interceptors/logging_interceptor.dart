@@ -11,10 +11,24 @@ class LoggingInterceptor extends Interceptor {
               printer: PrettyPrinter(methodCount: 0, printEmojis: true),
             );
 
+  Map<String, dynamic> _sanitizeHeaders(Map<String, dynamic> headers) {
+    final sanitized = Map<String, dynamic>.from(headers);
+    for (final key in sanitized.keys.toList()) {
+      if (key.toLowerCase() == 'authorization') {
+        sanitized[key] = '[REDACTED]';
+      }
+    }
+    return sanitized;
+  }
+
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
     if (kDebugMode) {
-      _logger.d('--> ${options.method} ${options.uri}\nHeaders: ${options.headers}\nBody: ${options.data}');
+      _logger.d(
+        '--> ${options.method} ${options.uri}\n'
+        'Headers: ${_sanitizeHeaders(options.headers)}\n'
+        'Body: ${options.data}',
+      );
     }
     super.onRequest(options, handler);
   }

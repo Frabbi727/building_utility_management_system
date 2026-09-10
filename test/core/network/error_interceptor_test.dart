@@ -22,6 +22,16 @@ void main() {
   });
 
   group('ErrorInterceptor.mapToFailure', () {
+    test('returns existing failure directly if err.error is already a Failure', () {
+      final dioError = DioException(
+        requestOptions: RequestOptions(path: '/test'),
+        error: const ValidationFailure('Validation error'),
+      );
+
+      final failure = interceptor.mapToFailure(dioError);
+      expect(failure, equals(const ValidationFailure('Validation error')));
+    });
+
     test('maps connectionTimeout to NetworkFailure', () {
       final dioError = DioException(
         requestOptions: RequestOptions(path: '/test'),

@@ -12,7 +12,7 @@ class MockSecureStorageService extends Mock implements SecureStorageService {}
 class MockNetworkInfo extends Mock implements NetworkInfo {}
 
 void main() {
-  test('DioClient initializes with expected options and interceptors', () {
+  test('DioClient initializes with expected options and interceptors at exact indices', () {
     final storage = MockSecureStorageService();
     final networkInfo = MockNetworkInfo();
 
@@ -27,9 +27,10 @@ void main() {
     expect(client.dio.options.receiveTimeout, const Duration(seconds: 30));
     expect(client.dio.options.sendTimeout, const Duration(seconds: 30));
 
-    expect(client.dio.interceptors.any((i) => i is ConnectivityInterceptor), isTrue);
-    expect(client.dio.interceptors.any((i) => i is AuthInterceptor), isTrue);
-    expect(client.dio.interceptors.any((i) => i is LoggingInterceptor), isTrue);
-    expect(client.dio.interceptors.any((i) => i is ErrorInterceptor), isTrue);
+    expect(client.dio.interceptors.length, 4);
+    expect(client.dio.interceptors[0], isA<ConnectivityInterceptor>());
+    expect(client.dio.interceptors[1], isA<AuthInterceptor>());
+    expect(client.dio.interceptors[2], isA<LoggingInterceptor>());
+    expect(client.dio.interceptors[3], isA<ErrorInterceptor>());
   });
 }

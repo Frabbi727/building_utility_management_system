@@ -28,6 +28,7 @@ class DioClient {
           },
         ));
 
+    dio.interceptors.removeImplyContentTypeInterceptor();
     dio.interceptors.addAll([
       ConnectivityInterceptor(networkInfo),
       AuthInterceptor(

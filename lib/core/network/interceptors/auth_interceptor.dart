@@ -35,7 +35,8 @@ class AuthInterceptor extends QueuedInterceptorsWrapper {
       return handler.next(err);
     }
 
-    if (err.requestOptions.path.contains(ApiEndpoints.login)) {
+    if (err.requestOptions.path.contains(ApiEndpoints.login) ||
+        err.requestOptions.path.contains(ApiEndpoints.refreshToken)) {
       return handler.next(err);
     }
 
@@ -69,11 +70,13 @@ class AuthInterceptor extends QueuedInterceptorsWrapper {
           refreshToken: newRefreshToken ?? refreshToken,
         );
         tokenToUse = newAccessToken;
-      } on DioException {
-        await _handleLogout();
-        return handler.next(err);
+      } on DioException catch (refreshErr) {
+        final statusCode = refreshErr.response?.statusCode;
+        if (statusCode == 400 || statusCode == 401 || statusCode == 403) {
+          await _handleLogout();
+        }
+        return handler.next(refreshErr);
       } catch (_) {
-        await _handleLogout();
         return handler.next(err);
       }
     }

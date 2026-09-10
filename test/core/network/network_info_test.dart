@@ -34,5 +34,15 @@ void main() {
       expect(result, isFalse);
       verify(() => mockConnectivity.checkConnectivity()).called(1);
     });
+
+    test('returns false when connectivity result list is empty', () async {
+      when(() => mockConnectivity.checkConnectivity())
+          .thenAnswer((_) async => <ConnectivityResult>[]);
+
+      final result = await networkInfo.isConnected;
+
+      expect(result, isFalse);
+      verify(() => mockConnectivity.checkConnectivity()).called(1);
+    });
   });
 }

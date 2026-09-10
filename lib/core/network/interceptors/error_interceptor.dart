@@ -10,6 +10,10 @@ class ErrorInterceptor extends Interceptor {
   }
 
   Failure mapToFailure(DioException err) {
+    if (err.error is Failure) {
+      return err.error as Failure;
+    }
+
     switch (err.type) {
       case DioExceptionType.connectionTimeout:
       case DioExceptionType.sendTimeout:
