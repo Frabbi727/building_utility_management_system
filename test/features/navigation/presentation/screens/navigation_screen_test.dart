@@ -11,12 +11,23 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:mocktail/mocktail.dart';
 
+import 'package:building_utility_management_system/features/dashboard/domain/entities/dashboard_data_entity.dart';
+import 'package:building_utility_management_system/features/dashboard/domain/entities/resident_balances_entity.dart';
+import 'package:building_utility_management_system/features/dashboard/domain/usecases/get_dashboard_data_usecase.dart';
+import 'package:building_utility_management_system/features/dashboard/presentation/controllers/dashboard_controller.dart';
+import 'package:building_utility_management_system/features/dashboard/presentation/screens/dashboard_screen.dart';
+import 'package:fpdart/fpdart.dart';
+
 class MockLocalCacheService extends Mock implements LocalCacheService {}
+class MockGetDashboardDataUseCase extends Mock
+    implements GetDashboardDataUseCase {}
 
 void main() {
   late NavigationController navigationController;
   late MockLocalCacheService mockCacheService;
+  late MockGetDashboardDataUseCase mockDashboardUseCase;
   late FlatContextService flatContextService;
+  late DashboardController dashboardController;
 
   const testFlat = FlatEntity(
     id: 1,
@@ -29,13 +40,34 @@ void main() {
   setUp(() {
     Get.reset();
     mockCacheService = MockLocalCacheService();
+    mockDashboardUseCase = MockGetDashboardDataUseCase();
     when(() => mockCacheService.getInt(any())).thenReturn(1);
     when(() => mockCacheService.putInt(any(), any()))
         .thenAnswer((_) async => true);
 
+    const sampleData = DashboardDataEntity(
+      flat: testFlat,
+      balances: ResidentBalancesEntity(
+        totalDue: '5000.00',
+        advanceHeld: '0.00',
+        currentMonthCharges: '5000.00',
+        arrears: '0.00',
+      ),
+      activeNotices: [],
+      recentActivity: [],
+    );
+    when(() => mockDashboardUseCase(flatId: any(named: 'flatId')))
+        .thenAnswer((_) async => const Right(sampleData));
+
     flatContextService = FlatContextService(cacheService: mockCacheService);
     flatContextService.initializeFlats([testFlat]);
     Get.put<FlatContextService>(flatContextService);
+
+    dashboardController = DashboardController(
+      getDashboardDataUseCase: mockDashboardUseCase,
+      flatService: flatContextService,
+    );
+    Get.put<DashboardController>(dashboardController);
 
     navigationController = NavigationController();
     Get.put<NavigationController>(navigationController);
@@ -67,10 +99,22 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(NavigationBar), findsOneWidget);
-    expect(find.text('Home'), findsOneWidget);
-    expect(find.text('Bills'), findsOneWidget);
-    expect(find.text('Payments'), findsOneWidget);
-    expect(find.text('Maintenance'), findsOneWidget);
+    expect(
+        find.descendant(
+            of: find.byType(NavigationBar), matching: find.text('Home')),
+        findsOneWidget);
+    expect(
+        find.descendant(
+            of: find.byType(NavigationBar), matching: find.text('Bills')),
+        findsOneWidget);
+    expect(
+        find.descendant(
+            of: find.byType(NavigationBar), matching: find.text('Payments')),
+        findsOneWidget);
+    expect(
+        find.descendant(
+            of: find.byType(NavigationBar), matching: find.text('Maintenance')),
+        findsOneWidget);
   });
 
   testWidgets('displays selected flat in app bar chip', (tester) async {
@@ -86,23 +130,26 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(navigationController.currentIndex.value, 0);
-    expect(find.text('Dashboard View'), findsOneWidget);
+    expect(find.byType(DashboardScreen), findsOneWidget);
 
     // Tap Bills destination
-    await tester.tap(find.text('Bills'));
+    await tester.tap(find.descendant(
+        of: find.byType(NavigationBar), matching: find.text('Bills')));
     await tester.pumpAndSettle();
 
     expect(navigationController.currentIndex.value, 1);
     expect(find.text('Bills'), findsAtLeast(1));
 
     // Tap Payments destination
-    await tester.tap(find.text('Payments'));
+    await tester.tap(find.descendant(
+        of: find.byType(NavigationBar), matching: find.text('Payments')));
     await tester.pumpAndSettle();
 
     expect(navigationController.currentIndex.value, 2);
 
     // Tap Maintenance destination
-    await tester.tap(find.text('Maintenance'));
+    await tester.tap(find.descendant(
+        of: find.byType(NavigationBar), matching: find.text('Maintenance')));
     await tester.pumpAndSettle();
 
     expect(navigationController.currentIndex.value, 3);
