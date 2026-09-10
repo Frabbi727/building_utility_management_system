@@ -1,0 +1,11 @@
+{
+  "@@locale": "en",
+  "appName": "Building Utility Management",
+  "loginTitle": "Sign In",
+  "loginButton": "Login",
+  "emailLabel": "Email Address",
+  "passwordLabel": "Password",
+  "emailValidation": "Please enter a valid email address",
+  "passwordValidation": "Password must be at least 6 characters",
+  "homeTitle": "Dashboard"
+}

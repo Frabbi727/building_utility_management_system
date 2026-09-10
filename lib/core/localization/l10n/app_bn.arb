@@ -1,0 +1,11 @@
+{
+  "@@locale": "bn",
+  "appName": "বিল্ডিং ইউটিলিটি ম্যানেজমেন্ট",
+  "loginTitle": "লগইন করুন",
+  "loginButton": "লগইন",
+  "emailLabel": "ইমেল ঠিকানা",
+  "passwordLabel": "পাসওয়ার্ড",
+  "emailValidation": "একটি সঠিক ইমেল ঠিকানা লিখুন",
+  "passwordValidation": "পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে",
+  "homeTitle": "ড্যাশবোর্ড"
+}
