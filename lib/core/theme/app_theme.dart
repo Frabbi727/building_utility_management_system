@@ -9,6 +9,7 @@ abstract final class AppTheme {
       brightness: Brightness.light,
       colorScheme: const ColorScheme.light(
         primary: AppColors.primary,
+        secondary: AppColors.secondary,
         surface: AppColors.surfaceLight,
         error: AppColors.error,
       ),
@@ -27,6 +28,7 @@ abstract final class AppTheme {
       brightness: Brightness.dark,
       colorScheme: const ColorScheme.dark(
         primary: AppColors.primary,
+        secondary: AppColors.secondary,
         surface: AppColors.surfaceDark,
         error: AppColors.error,
       ),

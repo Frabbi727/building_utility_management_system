@@ -58,5 +58,83 @@ void main() {
       );
       expect(textField.obscureText, isTrue);
     });
+
+    testWidgets('passes keyboardType, textInputAction, icons, and fires onChanged', (tester) async {
+      String? changedValue;
+
+      await tester.pumpWidget(
+        ScreenUtilInit(
+          designSize: const Size(375, 812),
+          builder: (context, _) => MaterialApp(
+            home: Scaffold(
+              body: AppTextField(
+                labelText: 'Username',
+                keyboardType: TextInputType.emailAddress,
+                textInputAction: TextInputAction.next,
+                prefixIcon: const Icon(Icons.person),
+                suffixIcon: const Icon(Icons.check),
+                onChanged: (val) => changedValue = val,
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.byIcon(Icons.person), findsOneWidget);
+      expect(find.byIcon(Icons.check), findsOneWidget);
+
+      final textField = tester.widget<TextField>(
+        find.descendant(
+          of: find.byType(TextFormField),
+          matching: find.byType(TextField),
+        ),
+      );
+      expect(textField.keyboardType, TextInputType.emailAddress);
+      expect(textField.textInputAction, TextInputAction.next);
+
+      await tester.enterText(find.byType(TextFormField), 'alice');
+      expect(changedValue, 'alice');
+    });
+
+    testWidgets('executes validator with GlobalKey<FormState>', (tester) async {
+      final formKey = GlobalKey<FormState>();
+      final controller = TextEditingController();
+
+      await tester.pumpWidget(
+        ScreenUtilInit(
+          designSize: const Size(375, 812),
+          builder: (context, _) => MaterialApp(
+            home: Scaffold(
+              body: Form(
+                key: formKey,
+                child: AppTextField(
+                  labelText: 'Required Field',
+                  controller: controller,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Field cannot be empty';
+                    }
+                    return null;
+                  },
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final isInitialValid = formKey.currentState!.validate();
+      await tester.pumpAndSettle();
+
+      expect(isInitialValid, isFalse);
+      expect(find.text('Field cannot be empty'), findsOneWidget);
+
+      await tester.enterText(find.byType(TextFormField), 'Valid text');
+      final isAfterInputValid = formKey.currentState!.validate();
+      await tester.pumpAndSettle();
+
+      expect(isAfterInputValid, isTrue);
+      expect(find.text('Field cannot be empty'), findsNothing);
+    });
   });
 }

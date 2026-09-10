@@ -34,6 +34,7 @@ void main() {
 
       expect(find.text('Content'), findsOneWidget);
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.byType(Positioned), findsOneWidget);
     });
   });
 }

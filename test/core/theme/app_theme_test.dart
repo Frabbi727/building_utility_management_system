@@ -21,6 +21,7 @@ void main() {
       expect(theme.useMaterial3, isTrue);
       expect(theme.brightness, Brightness.light);
       expect(theme.colorScheme.primary, AppColors.primary);
+      expect(theme.colorScheme.secondary, AppColors.secondary);
       expect(theme.colorScheme.surface, AppColors.surfaceLight);
       expect(theme.colorScheme.error, AppColors.error);
       expect(theme.scaffoldBackgroundColor, AppColors.backgroundLight);
@@ -37,6 +38,7 @@ void main() {
       expect(theme.useMaterial3, isTrue);
       expect(theme.brightness, Brightness.dark);
       expect(theme.colorScheme.primary, AppColors.primary);
+      expect(theme.colorScheme.secondary, AppColors.secondary);
       expect(theme.colorScheme.surface, AppColors.surfaceDark);
       expect(theme.colorScheme.error, AppColors.error);
       expect(theme.scaffoldBackgroundColor, AppColors.backgroundDark);
