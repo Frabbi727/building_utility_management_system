@@ -29,6 +29,13 @@ void main() {
       verifyNever(() => mockStorage.hasToken);
     });
 
+    test('redirect returns null when target route is login with query parameters regardless of token status', () {
+      final result = middleware.redirect('${AppRoutes.login}?redirect=${AppRoutes.home}');
+
+      expect(result, isNull);
+      verifyNever(() => mockStorage.hasToken);
+    });
+
     test('redirect redirects to login when token is missing', () {
       when(() => mockStorage.hasToken).thenReturn(false);
 
