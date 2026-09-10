@@ -535,88 +535,301 @@ result.fold(
 
 ---
 
-## 12. Routing — GetX
+## 12. Routing & Route Guards — GetX
 
-- `GetMaterialApp` + **named routes** via `app_pages.dart`
-  (`List<GetPage>` with `binding:` set per route) — gives declarative
-  navigation, nested routes, and transition animations without a separate
-  router package.
-- Route names centralized in `route_names.dart` as static consts
-  (`AppRoutes.login`, `AppRoutes.home`) — no magic string paths in widgets.
-- Navigate via `Get.toNamed(AppRoutes.home)`, `Get.offAllNamed(...)` (e.g., after
-  logout) — no `BuildContext` required, so navigation works cleanly from
-  Controllers/interceptors too.
-- Auth-guarded routes: implement `GetMiddleware` (`onPageCalled`/`redirect`) that
-  checks `AuthRepository`/token presence and redirects to login when needed,
-  attached per-`GetPage` via `middlewares: [AuthMiddleware()]`.
+- `GetMaterialApp` configured with declarative named routes in `core/routing/app_pages.dart`:
+  ```dart
+  import 'package:get/get.dart';
+  import '../../features/auth/presentation/bindings/auth_binding.dart';
+  import '../../features/auth/presentation/screens/login_screen.dart';
+  import 'route_names.dart';
 
----
+  class AppPages {
+    static const initial = AppRoutes.login;
 
-## 13. Environment / Flavors
-
-- `--dart-define` or `flutter_flavorizr` for `dev` / `staging` / `prod`, each with
-  its own `baseUrl`, app icon/name, and Firebase config if used.
-- `.env` (via `flutter_dotenv`) for non-secret runtime config; secrets never
-  committed to source control.
-
----
-
-## 14. Testing
-
-- `test/` mirrors `lib/features/...` structure.
-- Unit tests: Controllers (with mocked repositories via `mocktail`, using
-  `Get.put()` to inject mocks before instantiating the controller under test),
-  UseCases, Repositories (with mocked data sources).
-- Widget tests for key screens; golden tests optional for design-system widgets.
-
----
-
-## 15. Code Quality
-
-- `analysis_options.yaml` with `very_good_analysis` or `flutter_lints` (strict mode).
-- Enforce via CI: `flutter analyze`, `dart format --set-exit-if-changed`,
-  `flutter test`.
-- Pre-commit hook (e.g., `lefthook` or `husky`-style) running analyze + format.
+    static final routes = <GetPage<dynamic>>[
+      GetPage(
+        name: AppRoutes.login,
+        page: () => const LoginScreen(),
+        binding: AuthBinding(),
+      ),
+      // Additional guarded routes attached with middlewares: [AuthMiddleware()]
+    ];
+  }
+  ```
+- **Static Route Names (`core/routing/route_names.dart`)**:
+  ```dart
+  abstract class AppRoutes {
+    static const login = '/login';
+    static const home = '/home';
+    static const profile = '/profile';
+    static const settings = '/settings';
+  }
+  ```
+- **Navigation Invariant**: Use `Get.toNamed(...)`, `Get.offAllNamed(...)` — no `BuildContext` required, allowing clean navigation from controllers or auth expiration handlers.
+- **Route Guards (`GetMiddleware`)**: Implement `AuthMiddleware extends GetMiddleware` overriding `redirect(String? route)` to verify token existence in `SecureStorageService` and redirect to `AppRoutes.login` if unauthenticated.
 
 ---
 
-## 16. Suggested Core Packages
+## 13. Environment Configuration & Flavors
 
-| Purpose | Package |
-|---|---|
-| Networking | `dio` |
-| State management, DI, routing | `get` (GetX) |
-| Functional error handling | `fpdart` |
-| Immutable models | `json_serializable` + `json_annotation` — models use `@JsonSerializable()` with generated `*.g.dart` for `fromJson`/`toJson`; never hand-write serialization code |
-| Value equality | `equatable` — entities, `Failure` classes, and UI states extend `Equatable` and override `props`, instead of `freezed` unions |
-| Secure token storage | `flutter_secure_storage` |
-| Local cache | `hive`, `hive_flutter` (or `shared_preferences` for simple flags) |
-| Responsive sizing | `flutter_screenutil` |
-| Fonts | `google_fonts` |
-| Localization | `intl`, `flutter_localizations` |
-| Connectivity | `connectivity_plus` |
-| Logging | `logger` |
-| Env config | `flutter_dotenv` |
-| Testing | `mocktail`, `flutter_test`, `get_test` (for testing GetX controllers/bindings) |
-| Lints | `very_good_analysis` |
+- Support `dev`, `staging`, and `prod` configurations using compile-time constants via `--dart-define` or `--dart-define-from-file`.
+- Abstract flavor configuration in `app/flavors/app_flavor.dart`:
+  ```dart
+  enum FlavorEnvironment { dev, staging, prod }
+
+  class AppFlavor {
+    static late final FlavorEnvironment environment;
+    static late final String baseUrl;
+    static late final String appName;
+
+    static void initialize({
+      required FlavorEnvironment env,
+      required String apiBaseUrl,
+      required String title,
+    }) {
+      environment = env;
+      baseUrl = apiBaseUrl;
+      appName = title;
+    }
+  }
+  ```
+- Secrets and keys are injected at build/CI time and **never** committed to version control.
 
 ---
 
-## 17. Deliverables Expected From the AI Assistant
+## 14. Reference Vertical Slice: End-to-End Auth Pattern
 
-1. Full folder structure scaffolded as above.
-2. Working `DioClient` with all 4 interceptors, including a real refresh-token
-   race-condition-safe implementation.
-3. One complete vertical slice (e.g., **Auth: login/logout**) implemented
-   end-to-end (data → domain → presentation, with `AuthController`,
-   `AuthBinding`, and `GetPage` entry) as a reference pattern.
-4. `core/theme`, `core/localization`, `core/storage`, `core/bindings` fully wired
-   and working in `main.dart` via `GetMaterialApp`.
-5. English + Bangla `.arb` files with at least the auth-flow strings, and a
-   working language switcher.
-6. `pubspec.yaml` with all packages above, pinned versions.
-7. A short `README.md` explaining the architecture, folder structure, and how to
-   add a new feature following the same pattern.
-8. All models built with `json_serializable`/`equatable`, with generated
-   `*.g.dart` files committed — no hand-written `fromJson`/`toJson` bodies
-   anywhere in the codebase.
+Below is the complete canonical pattern that must be replicated across all features:
+
+### 14.1 Remote Data Source (`data/datasources/auth_remote_data_source.dart`)
+```dart
+import 'package:dio/dio.dart';
+import '../../../../core/constants/api_endpoints.dart';
+import '../models/auth_response_model.dart';
+
+abstract class AuthRemoteDataSource {
+  Future<AuthResponseModel> login({required String email, required String password});
+}
+
+class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
+  final Dio _dio;
+  const AuthRemoteDataSourceImpl({required Dio dio}) : _dio = dio;
+
+  @override
+  Future<AuthResponseModel> login({required String email, required String password}) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      ApiEndpoints.login,
+      data: {'email': email, 'password': password},
+    );
+    return AuthResponseModel.fromJson(response.data!);
+  }
+}
+```
+
+### 14.2 Repository Implementation (`data/repositories/auth_repository_impl.dart`)
+```dart
+import 'package:dio/dio.dart';
+import 'package:fpdart/fpdart.dart';
+import '../../../../core/error/failures.dart';
+import '../../domain/entities/user_entity.dart';
+import '../../domain/repositories/auth_repository.dart';
+import '../datasources/auth_local_data_source.dart';
+import '../datasources/auth_remote_data_source.dart';
+
+class AuthRepositoryImpl implements AuthRepository {
+  final AuthRemoteDataSource _remoteDataSource;
+  final AuthLocalDataSource _localDataSource;
+
+  const AuthRepositoryImpl({
+    required AuthRemoteDataSource remoteDataSource,
+    required AuthLocalDataSource localDataSource,
+  })  : _remoteDataSource = remoteDataSource,
+        _localDataSource = localDataSource;
+
+  @override
+  Future<Either<Failure, UserEntity>> login({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final response = await _remoteDataSource.login(email: email, password: password);
+      await _localDataSource.saveTokens(
+        accessToken: response.accessToken,
+        refreshToken: response.refreshToken,
+      );
+      return Right(response.user.toEntity());
+    } on DioException catch (e) {
+      final failure = e.error is Failure
+          ? e.error! as Failure
+          : ServerFailure(e.message ?? 'Server error occurred');
+      return Left(failure);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+}
+```
+
+### 14.3 UseCase (`domain/usecases/login_usecase.dart`)
+```dart
+import 'package:fpdart/fpdart.dart';
+import '../../../../core/error/failures.dart';
+import '../entities/user_entity.dart';
+import '../repositories/auth_repository.dart';
+
+class LoginUseCase {
+  final AuthRepository _repository;
+  const LoginUseCase({required AuthRepository repository}) : _repository = repository;
+
+  Future<Either<Failure, UserEntity>> call({
+    required String email,
+    required String password,
+  }) => _repository.login(email: email, password: password);
+}
+```
+
+### 14.4 ViewModel / Controller (`presentation/controllers/auth_controller.dart`)
+```dart
+import 'package:get/get.dart';
+import '../../../../core/routing/route_names.dart';
+import '../../../core/base/view_state.dart';
+import '../../domain/entities/user_entity.dart';
+import '../../domain/usecases/login_usecase.dart';
+
+class AuthController extends GetxController {
+  final LoginUseCase _loginUseCase;
+  AuthController({required LoginUseCase loginUseCase}) : _loginUseCase = loginUseCase;
+
+  final state = Rx<ViewState>(const IdleState());
+
+  Future<void> login(String email, String password) async {
+    state.value = const LoadingState();
+    final result = await _loginUseCase(email: email, password: password);
+    result.fold(
+      (failure) => state.value = ErrorState(failure.message),
+      (user) {
+        state.value = SuccessState<UserEntity>(user);
+        Get.offAllNamed(AppRoutes.home);
+      },
+    );
+  }
+}
+```
+
+### 14.5 View Screen (`presentation/screens/login_screen.dart`)
+```dart
+import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
+import '../../../../core/base/view_state.dart';
+import '../../../../core/utils/extensions/context_ext.dart';
+import '../controllers/auth_controller.dart';
+
+class LoginScreen extends GetView<AuthController> {
+  const LoginScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text(context.l10n.loginTitle)),
+      body: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
+        child: Obx(() {
+          final currentState = controller.state.value;
+          return Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (currentState is ErrorState)
+                Text(currentState.message, style: TextStyle(color: Colors.red, fontSize: 14.sp)),
+              SizedBox(height: 16.h),
+              if (currentState is LoadingState)
+                const CircularProgressIndicator()
+              else
+                ElevatedButton(
+                  onPressed: () => controller.login('user@example.com', 'secret'),
+                  child: Text(context.l10n.loginButton),
+                ),
+            ],
+          );
+        }),
+      ),
+    );
+  }
+}
+```
+
+---
+
+## 15. Standardized Core Package Matrix (`pubspec.yaml`)
+
+| Purpose | Package | Version Floor | Notes |
+|---|---|---|---|
+| State / DI / Navigation | `get` | `^4.6.6` | Unified reactive state, bindings, declarative routes |
+| Networking | `dio` | `^5.4.0` | Client with QueuedInterceptorsWrapper token refresh |
+| Error Handling | `fpdart` | `^1.1.0` | Functional `Either<Failure, T>` return types |
+| Value Equality | `equatable` | `^2.0.5` | Equality on entities, models, failures, and UI states |
+| Model Serialization | `json_annotation` | `^4.9.0` | Annotations for code generator |
+| Secure Storage | `flutter_secure_storage` | `^9.2.2` | Encrypted JWT token persistence |
+| Offline Cache | `hive`, `hive_flutter` | `^2.2.3` | User preferences, theme, and locale cache |
+| Responsive Layout | `flutter_screenutil` | `^5.9.3` | Adaptive typography and spacing (`.w`, `.h`, `.sp`) |
+| Typography | `google_fonts` | `^6.2.1` | Cloud font loader with local asset fallback |
+| Localization | `intl`, `flutter_localizations` | `^0.19.0`, `sdk: flutter` | Official `.arb` catalog code generation |
+| Connectivity | `connectivity_plus` | `^6.0.3` | Pre-flight network status checker |
+| Logging | `logger` | `^2.2.0` | Structured logging wrapped in `kDebugMode` |
+| Env Config | `flutter_dotenv` | `^5.1.0` | Local development environment parsing |
+| **Dev: Code Generation** | `build_runner`, `json_serializable` | `^2.4.9`, `^6.8.0` | Code generation for `*.g.dart` |
+| **Dev: Testing** | `mocktail`, `get_test` | `^1.0.4`, `^7.4.2` | Mocking and GetX controller testing |
+| **Dev: Lints** | `very_good_analysis` or `flutter_lints` | `^6.0.0` | Strict linter configuration |
+
+---
+
+## 16. Testing Strategy & Quality Assurance
+
+- **Unit Testing Controllers & UseCases (`mocktail`)**:
+  ```dart
+  import 'package:flutter_test/flutter_test.dart';
+  import 'package:fpdart/fpdart.dart';
+  import 'package:mocktail/mocktail.dart';
+  // Example unit test for AuthController
+  ```
+- Controllers are tested in isolation by mocking abstract UseCases/Repositories and verifying `state.value` transitions (`IdleState` → `LoadingState` → `SuccessState` / `ErrorState`).
+- Data sources tested with `mocktail` mocking `Dio` / `HttpClientAdapter`.
+- Repositories tested verifying error mapping from `DioException` to `Left(Failure)`.
+
+---
+
+## 17. Agent Scaffolding Workflow & Verification Gates
+
+When an AI coding assistant is tasked with scaffolding this starter project, it **must** execute the following checklist in sequence without omitting verification steps:
+
+1. **Phase 1: Project & Dependency Setup**
+   - Populate `pubspec.yaml` using the exact packages and version floors defined in Section 15.
+   - Configure root `l10n.yaml` and `analysis_options.yaml`.
+   - Run dependency installation:
+     ```bash
+     flutter pub get
+     ```
+2. **Phase 2: Core Infrastructure Scaffolding**
+   - Scaffold `lib/app/` (`app.dart`, `bootstrap.dart`, `flavors/`).
+   - Scaffold `lib/core/` (`network/`, `storage/`, `localization/`, `routing/`, `theme/`, `error/`, `utils/`, `widgets/`).
+3. **Phase 3: Reference Vertical Slice**
+   - Implement `lib/features/auth/` end-to-end following Section 14 blueprints.
+   - Implement `app_en.arb` and `app_bn.arb` with authentication translation keys.
+4. **Phase 4: Code Generation**
+   - Run localization and model generation:
+     ```bash
+     flutter gen-l10n
+     dart run build_runner build --delete-conflicting-outputs
+     ```
+5. **Phase 5: Automated Verification Gates (Mandatory)**
+   - **Static Analysis Gate**:
+     ```bash
+     flutter analyze --fatal-infos
+     ```
+     *Pass criteria*: Zero errors, zero warnings, zero infos.
+   - **Automated Test Gate**:
+     ```bash
+     flutter test
+     ```
+     *Pass criteria*: All unit and widget tests pass with 100% green status.
