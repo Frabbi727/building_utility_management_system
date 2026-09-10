@@ -567,7 +567,25 @@ result.fold(
   }
   ```
 - **Navigation Invariant**: Use `Get.toNamed(...)`, `Get.offAllNamed(...)` — no `BuildContext` required, allowing clean navigation from controllers or auth expiration handlers.
-- **Route Guards (`GetMiddleware`)**: Implement `AuthMiddleware extends GetMiddleware` overriding `redirect(String? route)` to verify token existence in `SecureStorageService` and redirect to `AppRoutes.login` if unauthenticated.
+- **Route Guards (`GetMiddleware`)**: Implement `AuthMiddleware extends GetMiddleware` overriding `redirect(String? route)` to verify token existence in `SecureStorageService` and redirect to `AppRoutes.login` if unauthenticated:
+  ```dart
+  import 'package:flutter/material.dart';
+  import 'package:get/get.dart';
+  import '../storage/secure_storage_service.dart';
+  import 'route_names.dart';
+
+  class AuthMiddleware extends GetMiddleware {
+    @override
+    RouteSettings? redirect(String? route) {
+      final storage = Get.find<SecureStorageService>();
+      final token = storage.cachedAccessToken; // Synchronous cached token check
+      if (token == null || token.isEmpty) {
+        return const RouteSettings(name: AppRoutes.login);
+      }
+      return null;
+    }
+  }
+  ```
 
 ---
 
@@ -693,7 +711,7 @@ class LoginUseCase {
 ```dart
 import 'package:get/get.dart';
 import '../../../../core/routing/route_names.dart';
-import '../../../core/base/view_state.dart';
+import '../../../../core/base/view_state.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/usecases/login_usecase.dart';
 
@@ -791,7 +809,42 @@ class LoginScreen extends GetView<AuthController> {
   import 'package:flutter_test/flutter_test.dart';
   import 'package:fpdart/fpdart.dart';
   import 'package:mocktail/mocktail.dart';
-  // Example unit test for AuthController
+  import 'package:my_app/core/base/view_state.dart';
+  import 'package:my_app/features/auth/domain/entities/user_entity.dart';
+  import 'package:my_app/features/auth/domain/usecases/login_usecase.dart';
+  import 'package:my_app/features/auth/presentation/controllers/auth_controller.dart';
+
+  class MockLoginUseCase extends Mock implements LoginUseCase {}
+
+  void main() {
+    late AuthController controller;
+    late MockLoginUseCase mockLoginUseCase;
+
+    const tUser = UserEntity(id: '1', name: 'John Doe', email: 'john@example.com');
+
+    setUp(() {
+      mockLoginUseCase = MockLoginUseCase();
+      controller = AuthController(loginUseCase: mockLoginUseCase);
+    });
+
+    test('initial state should be IdleState', () {
+      expect(controller.state.value, equals(const IdleState()));
+    });
+
+    test('should emit [LoadingState, SuccessState] when login succeeds', () async {
+      // Arrange
+      when(() => mockLoginUseCase(email: any(named: 'email'), password: any(named: 'password')))
+          .thenAnswer((_) async => const Right(tUser));
+
+      // Act
+      final future = controller.login('john@example.com', 'password123');
+
+      // Assert
+      expect(controller.state.value, equals(const LoadingState()));
+      await future;
+      expect(controller.state.value, equals(const SuccessState<UserEntity>(tUser)));
+    });
+  }
   ```
 - Controllers are tested in isolation by mocking abstract UseCases/Repositories and verifying `state.value` transitions (`IdleState` → `LoadingState` → `SuccessState` / `ErrorState`).
 - Data sources tested with `mocktail` mocking `Dio` / `HttpClientAdapter`.
