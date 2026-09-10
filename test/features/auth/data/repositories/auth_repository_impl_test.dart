@@ -1,0 +1,113 @@
+import 'package:building_utility_management_system/core/error/failures.dart';
+import 'package:building_utility_management_system/features/auth/data/datasources/auth_local_data_source.dart';
+import 'package:building_utility_management_system/features/auth/data/datasources/auth_remote_data_source.dart';
+import 'package:building_utility_management_system/features/auth/data/models/auth_response_model.dart';
+import 'package:building_utility_management_system/features/auth/data/models/user_model.dart';
+import 'package:building_utility_management_system/features/auth/data/repositories/auth_repository_impl.dart';
+import 'package:building_utility_management_system/features/auth/domain/entities/user_entity.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:fpdart/fpdart.dart';
+import 'package:mocktail/mocktail.dart';
+
+class MockAuthRemoteDataSource extends Mock implements AuthRemoteDataSource {}
+class MockAuthLocalDataSource extends Mock implements AuthLocalDataSource {}
+
+void main() {
+  late MockAuthRemoteDataSource mockRemoteDataSource;
+  late MockAuthLocalDataSource mockLocalDataSource;
+  late AuthRepositoryImpl repository;
+
+  setUp(() {
+    mockRemoteDataSource = MockAuthRemoteDataSource();
+    mockLocalDataSource = MockAuthLocalDataSource();
+    repository = AuthRepositoryImpl(
+      remoteDataSource: mockRemoteDataSource,
+      localDataSource: mockLocalDataSource,
+    );
+  });
+
+  const email = 'test@example.com';
+  const password = 'securePassword123';
+  const userModel = UserModel(
+    id: 'user-001',
+    name: 'Jane Doe',
+    email: email,
+  );
+  const responseModel = AuthResponseModel(
+    accessToken: 'access-token-123',
+    refreshToken: 'refresh-token-456',
+    user: userModel,
+  );
+
+  test('login saves tokens and returns Right(UserEntity) on success', () async {
+    when(() => mockRemoteDataSource.login(email: email, password: password))
+        .thenAnswer((_) async => responseModel);
+    when(
+      () => mockLocalDataSource.saveTokens(
+        accessToken: responseModel.accessToken,
+        refreshToken: responseModel.refreshToken,
+      ),
+    ).thenAnswer((_) async {});
+
+    final result = await repository.login(email: email, password: password);
+
+    expect(result.isRight(), isTrue);
+    result.fold(
+      (failure) => fail('Should not be failure'),
+      (entity) => expect(entity, equals(userModel.toEntity())),
+    );
+
+    verify(() => mockRemoteDataSource.login(email: email, password: password)).called(1);
+    verify(
+      () => mockLocalDataSource.saveTokens(
+        accessToken: responseModel.accessToken,
+        refreshToken: responseModel.refreshToken,
+      ),
+    ).called(1);
+  });
+
+  test('login returns Left(Failure) when DioException contains Failure in error field', () async {
+    const customFailure = AuthFailure('Invalid credentials provided');
+    final dioException = DioException(
+      requestOptions: RequestOptions(path: '/auth/login'),
+      error: customFailure,
+    );
+
+    when(() => mockRemoteDataSource.login(email: email, password: password))
+        .thenThrow(dioException);
+
+    final result = await repository.login(email: email, password: password);
+
+    expect(result, equals(const Left<Failure, UserEntity>(customFailure)));
+    verifyZeroInteractions(mockLocalDataSource);
+  });
+
+  test('login returns Left(ServerFailure) when DioException without Failure error is thrown', () async {
+    final dioException = DioException(
+      requestOptions: RequestOptions(path: '/auth/login'),
+      message: 'Connection timed out',
+    );
+
+    when(() => mockRemoteDataSource.login(email: email, password: password))
+        .thenThrow(dioException);
+
+    final result = await repository.login(email: email, password: password);
+
+    expect(result, equals(const Left<Failure, UserEntity>(ServerFailure('Connection timed out'))));
+    verifyZeroInteractions(mockLocalDataSource);
+  });
+
+  test('login returns Left(ServerFailure) when an unexpected generic exception occurs', () async {
+    when(() => mockRemoteDataSource.login(email: email, password: password))
+        .thenThrow(Exception('Unexpected crash'));
+
+    final result = await repository.login(email: email, password: password);
+
+    expect(result.isLeft(), isTrue);
+    result.fold(
+      (failure) => expect(failure, isA<ServerFailure>()),
+      (_) => fail('Should be failure'),
+    );
+  });
+}

@@ -1,0 +1,39 @@
+import 'package:dio/dio.dart';
+import 'package:fpdart/fpdart.dart';
+import '../../../../core/error/failures.dart';
+import '../../domain/entities/user_entity.dart';
+import '../../domain/repositories/auth_repository.dart';
+import '../datasources/auth_local_data_source.dart';
+import '../datasources/auth_remote_data_source.dart';
+
+class AuthRepositoryImpl implements AuthRepository {
+  final AuthRemoteDataSource remoteDataSource;
+  final AuthLocalDataSource localDataSource;
+
+  const AuthRepositoryImpl({
+    required this.remoteDataSource,
+    required this.localDataSource,
+  });
+
+  @override
+  Future<Either<Failure, UserEntity>> login({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final response = await remoteDataSource.login(email: email, password: password);
+      await localDataSource.saveTokens(
+        accessToken: response.accessToken,
+        refreshToken: response.refreshToken,
+      );
+      return Right(response.user.toEntity());
+    } on DioException catch (e) {
+      final failure = e.error is Failure
+          ? e.error! as Failure
+          : ServerFailure(e.message ?? 'Server error occurred');
+      return Left(failure);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+}
