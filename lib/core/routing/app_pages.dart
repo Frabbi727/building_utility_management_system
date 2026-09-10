@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../features/auth/presentation/bindings/auth_binding.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
+import '../../features/navigation/presentation/bindings/navigation_binding.dart';
+import '../../features/navigation/presentation/screens/navigation_screen.dart';
 import 'auth_middleware.dart';
 import 'route_names.dart';
 
@@ -16,7 +17,8 @@ abstract final class AppPages {
     ),
     GetPage(
       name: AppRoutes.home,
-      page: () => const Scaffold(body: Center(child: Text('Dashboard'))),
+      page: () => const NavigationScreen(),
+      binding: NavigationBinding(),
       middlewares: [AuthMiddleware()],
     ),
   ];
