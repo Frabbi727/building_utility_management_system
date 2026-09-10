@@ -13,7 +13,8 @@ class ResidentBalancesEntity extends Equatable {
     required this.arrears,
   });
 
-  bool get hasOutstandingDue => (double.tryParse(totalDue) ?? 0.0) > 0;
+  bool get hasOutstandingDue =>
+      (double.tryParse(totalDue.replaceAll(',', '')) ?? 0.0) > 0;
 
   @override
   List<Object?> get props => [

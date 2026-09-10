@@ -16,6 +16,14 @@ void main() {
         arrears: '0.00',
       );
       expect(balances.hasOutstandingDue, isTrue);
+
+      const formattedBalances = ResidentBalancesEntity(
+        totalDue: '1,500.00',
+        advanceHeld: '0.00',
+        currentMonthCharges: '1,500.00',
+        arrears: '0.00',
+      );
+      expect(formattedBalances.hasOutstandingDue, isTrue);
     });
 
     test('hasOutstandingDue returns false when totalDue is zero or negative or unparseable', () {
@@ -89,6 +97,16 @@ void main() {
         status: 'paid',
       );
       expect(paidLowerBill.isPaid, isTrue);
+
+      const paidTrimmedBill = LatestBillEntity(
+        id: 1,
+        billNo: 'B-1',
+        billingMonth: '2026-09',
+        totalAmount: '1000.00',
+        dueDate: '2026-09-15',
+        status: '  paid  ',
+      );
+      expect(paidTrimmedBill.isPaid, isTrue);
     });
 
     test('isPaid returns false when status is not paid', () {

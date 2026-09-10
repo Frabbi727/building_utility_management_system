@@ -17,7 +17,7 @@ class LatestBillEntity extends Equatable {
     required this.status,
   });
 
-  bool get isPaid => status.toLowerCase() == 'paid';
+  bool get isPaid => status.trim().toLowerCase() == 'paid';
 
   @override
   List<Object?> get props => [
