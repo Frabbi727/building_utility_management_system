@@ -1,4 +1,4 @@
-abstract class StorageKeys {
+abstract final class StorageKeys {
   static const authToken = 'auth_token';
   static const refreshToken = 'refresh_token';
   static const appBox = 'app_cache_box';

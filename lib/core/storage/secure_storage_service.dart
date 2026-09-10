@@ -28,9 +28,9 @@ class SecureStorageService {
     required String accessToken,
     required String refreshToken,
   }) async {
-    _cachedAccessToken = accessToken;
     await _storage.write(key: StorageKeys.authToken, value: accessToken);
     await _storage.write(key: StorageKeys.refreshToken, value: refreshToken);
+    _cachedAccessToken = accessToken;
   }
 
   Future<void> clearTokens() async {
