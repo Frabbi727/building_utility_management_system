@@ -98,6 +98,8 @@ In addition to `lib/`, the starter project mandates these root files:
   arb-dir: lib/core/localization/l10n
   template-arb-file: app_en.arb
   output-localization-file: app_localizations.dart
+  output-dir: lib/core/localization
+  synthetic-package: false
   untranslated-messages-file: untranslated_messages.json
   ```
 - **`analysis_options.yaml`**: Strict linter rules extending `very_good_analysis` or `flutter_lints` with strict-raw-types, strict-inference, and strict-casts enabled.
@@ -416,6 +418,8 @@ class UserModel extends Equatable {
 
   Map<String, dynamic> toJson() => _$UserModelToJson(this);
 
+  UserEntity toEntity() => UserEntity(id: id, name: name, email: email);
+
   @override
   List<Object?> get props => [id, name, email];
 }
@@ -486,6 +490,8 @@ result.fold(
   arb-dir: lib/core/localization/l10n
   template-arb-file: app_en.arb
   output-localization-file: app_localizations.dart
+  output-dir: lib/core/localization
+  synthetic-package: false
   untranslated-messages-file: untranslated_messages.json
   ```
 - Translation catalogs:
@@ -495,7 +501,13 @@ result.fold(
   ```bash
   flutter gen-l10n
   ```
-- String access via BuildContext extension: `context.l10n.loginTitle` (or helper extension). No hardcoded strings in widgets.
+- String access via BuildContext extension (`context.l10n.loginTitle`) defined in `lib/core/utils/extensions/context_ext.dart`:
+  ```dart
+  extension LocalizedContext on BuildContext {
+    AppLocalizations get l10n => AppLocalizations.of(this)!;
+  }
+  ```
+  No hardcoded strings in widgets.
 - Runtime language switching: Persist selection in `LocalCacheService` and execute:
   ```dart
   Get.updateLocale(const Locale('bn', 'BD')); // or Locale('en', 'US')
@@ -574,14 +586,14 @@ result.fold(
 |---|---|
 | Networking | `dio` |
 | State management, DI, routing | `get` (GetX) |
-| Functional error handling | `fpdart` or `dartz` |
+| Functional error handling | `fpdart` |
 | Immutable models | `json_serializable` + `json_annotation` — models use `@JsonSerializable()` with generated `*.g.dart` for `fromJson`/`toJson`; never hand-write serialization code |
 | Value equality | `equatable` — entities, `Failure` classes, and UI states extend `Equatable` and override `props`, instead of `freezed` unions |
 | Secure token storage | `flutter_secure_storage` |
 | Local cache | `hive`, `hive_flutter` (or `shared_preferences` for simple flags) |
 | Responsive sizing | `flutter_screenutil` |
 | Fonts | `google_fonts` |
-| Localization | `intl`, `flutter_localizations` (or GetX's built-in `Translations` class — see note below) |
+| Localization | `intl`, `flutter_localizations` |
 | Connectivity | `connectivity_plus` |
 | Logging | `logger` |
 | Env config | `flutter_dotenv` |
