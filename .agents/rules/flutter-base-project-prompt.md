@@ -503,6 +503,16 @@ result.fold(
   ```bash
   flutter gen-l10n
   ```
+- **App Wiring (`app/app.dart`)**: Configure the generated delegates and supported locales on `GetMaterialApp`:
+  ```dart
+  GetMaterialApp(
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    locale: const Locale('en', 'US'),
+    fallbackLocale: const Locale('en', 'US'),
+    ...
+  )
+  ```
 - String access via BuildContext extension (`context.l10n.loginTitle`) defined in `lib/core/utils/extensions/context_ext.dart`:
   ```dart
   extension LocalizedContext on BuildContext {
@@ -647,7 +657,38 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 }
 ```
 
-### 14.2 Repository Implementation (`data/repositories/auth_repository_impl.dart`)
+### 14.2 Local Data Source (`data/datasources/auth_local_data_source.dart`)
+```dart
+import '../../../../core/services/secure_storage_service.dart';
+
+abstract class AuthLocalDataSource {
+  Future<void> saveTokens({required String accessToken, required String refreshToken});
+  Future<String?> getAccessToken();
+  Future<String?> getRefreshToken();
+  Future<void> clearTokens();
+}
+
+class AuthLocalDataSourceImpl implements AuthLocalDataSource {
+  final SecureStorageService _storageService;
+  const AuthLocalDataSourceImpl({required SecureStorageService storageService})
+      : _storageService = storageService;
+
+  @override
+  Future<void> saveTokens({required String accessToken, required String refreshToken}) =>
+      _storageService.saveTokens(accessToken: accessToken, refreshToken: refreshToken);
+
+  @override
+  Future<String?> getAccessToken() => _storageService.getAccessToken();
+
+  @override
+  Future<String?> getRefreshToken() => _storageService.getRefreshToken();
+
+  @override
+  Future<void> clearTokens() => _storageService.clearTokens();
+}
+```
+
+### 14.3 Repository Implementation (`data/repositories/auth_repository_impl.dart`)
 ```dart
 import 'package:dio/dio.dart';
 import 'package:fpdart/fpdart.dart';
@@ -691,7 +732,7 @@ class AuthRepositoryImpl implements AuthRepository {
 }
 ```
 
-### 14.3 UseCase (`domain/usecases/login_usecase.dart`)
+### 14.4 UseCase (`domain/usecases/login_usecase.dart`)
 ```dart
 import 'package:fpdart/fpdart.dart';
 import '../../../../core/error/failures.dart';
@@ -709,7 +750,7 @@ class LoginUseCase {
 }
 ```
 
-### 14.4 ViewModel / Controller (`presentation/controllers/auth_controller.dart`)
+### 14.5 ViewModel / Controller (`presentation/controllers/auth_controller.dart`)
 ```dart
 import 'package:get/get.dart';
 import '../../../../core/routing/route_names.dart';
@@ -737,12 +778,13 @@ class AuthController extends GetxController {
 }
 ```
 
-### 14.5 View Screen (`presentation/screens/login_screen.dart`)
+### 14.6 View Screen (`presentation/screens/login_screen.dart`)
 ```dart
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../../../../core/base/view_state.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/extensions/context_ext.dart';
 import '../controllers/auth_controller.dart';
 
@@ -761,7 +803,7 @@ class LoginScreen extends GetView<AuthController> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               if (currentState is ErrorState)
-                Text(currentState.message, style: TextStyle(color: Colors.red, fontSize: 14.sp)),
+                Text(currentState.message, style: TextStyle(color: AppColors.error, fontSize: 14.sp)),
               SizedBox(height: 16.h),
               if (currentState is LoadingState)
                 const CircularProgressIndicator()
@@ -799,7 +841,7 @@ class LoginScreen extends GetView<AuthController> {
 | Logging | `logger` | `^2.2.0` | Structured logging wrapped in `kDebugMode` |
 | Env Config | `flutter_dotenv` | `^5.1.0` | Local development environment parsing |
 | **Dev: Code Generation** | `build_runner`, `json_serializable` | `^2.4.9`, `^6.8.0` | Code generation for `*.g.dart` |
-| **Dev: Testing** | `mocktail`, `get_test` | `^1.0.4`, `^7.4.2` | Mocking and GetX controller testing |
+| **Dev: Testing** | `flutter_test`, `mocktail` | `sdk: flutter`, `^1.0.4` | Unit & widget testing, mocktail verification |
 | **Dev: Lints** | `very_good_analysis` or `flutter_lints` | `^6.0.0` | Strict linter configuration |
 
 ---
@@ -849,6 +891,7 @@ class LoginScreen extends GetView<AuthController> {
       // Assert
       expect(controller.state.value, equals(const LoadingState()));
       await future;
+      verify(() => mockLoginUseCase(email: 'john@example.com', password: 'password123')).called(1);
       expect(controller.state.value, equals(const SuccessState<UserEntity>(tUser)));
     });
 
