@@ -269,7 +269,6 @@ void onError(DioException err, ErrorInterceptorHandler handler) {
 
 ## 4. State Management (GetX) & UI State Modeling
 
-### 4.1 Reactive State with Value Equality
 - Model UI state as an immutable hierarchy extending `Equatable`:
 ```dart
 import 'package:equatable/equatable.dart';
@@ -335,12 +334,12 @@ class ErrorState extends ViewState {
   - Injected lazily only when route is visited and disposed on route pop (unless `fenix: true` is configured):
   ```dart
   import 'package:get/get.dart';
-  import '../../features/auth/data/datasources/auth_remote_data_source.dart';
-  import '../../features/auth/data/repositories/auth_repository_impl.dart';
-  import '../../features/auth/domain/repositories/auth_repository.dart';
-  import '../../features/auth/domain/usecases/login_usecase.dart';
-  import '../../features/auth/presentation/controllers/auth_controller.dart';
-  import '../network/dio_client.dart';
+  import '../../../../core/network/dio_client.dart';
+  import '../../data/datasources/auth_remote_data_source.dart';
+  import '../../data/repositories/auth_repository_impl.dart';
+  import '../../domain/repositories/auth_repository.dart';
+  import '../../domain/usecases/login_usecase.dart';
+  import '../controllers/auth_controller.dart';
 
   class AuthBinding extends Bindings {
     @override
