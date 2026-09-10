@@ -107,23 +107,116 @@ Repeat the `features/<feature>/{data,domain,presentation}` pattern for all subse
 
 ---
 
-## 3. Networking (Dio)
+## 3. Networking Architecture (Dio)
 
-- Single `DioClient` singleton, configured with `baseUrl`, timeouts, headers.
-- **Interceptors (in order):**
-  1. `AuthInterceptor` — injects `Authorization: Bearer <token>` from secure storage
-     on every request; on `401`, pauses the queue, calls the refresh-token endpoint
-     once, retries queued requests, and logs the user out if refresh fails
-     (use `dio`'s `QueuedInterceptorsWrapper` to avoid race conditions on parallel
-     401s).
-  2. `LoggingInterceptor` — pretty request/response logs, disabled in release builds.
-  3. `ConnectivityInterceptor` — short-circuits with a `NoInternetFailure` when offline.
-  4. `ErrorInterceptor` — maps `DioException` (timeout, badResponse, cancel, etc.)
-     into typed app `Failure` objects with readable messages.
-- All API calls go through `RemoteDataSource` classes — never call `Dio` directly
-  from a ViewModel or Repository.
-- Wrap responses in a `Result<Failure, T>` (via `dartz` or `fpdart`) so ViewModels
-  handle success/error without try/catch sprawl.
+### 3.1 DioClient Specification
+- Single `DioClient` registered as a permanent singleton in GetX `InitialBinding`.
+- Base configuration:
+  - `baseUrl` sourced from active flavor configuration (`AppFlavor.baseUrl`).
+  - `connectTimeout: const Duration(seconds: 30)`.
+  - `receiveTimeout: const Duration(seconds: 30)`.
+  - Default JSON headers: `'Content-Type': 'application/json'`, `'Accept': 'application/json'`.
+- Interceptor execution pipeline strictly registered in order:
+  1. `ConnectivityInterceptor`: Pre-flight check with `network_info.dart` (`connectivity_plus`). Short-circuits with `NetworkFailure` when offline before hitting the wire.
+  2. `AuthInterceptor`: Attaches `Authorization: Bearer <token>` from `SecureStorageService`. Uses `QueuedInterceptorsWrapper` to pause incoming requests during 401s, executes atomic token refresh, retries queued calls, or redirects to login on terminal auth failure.
+  3. `LoggingInterceptor`: Pretty request/response/error logs, strictly wrapped in `if (kDebugMode)` to ensure zero log leakage in release builds.
+  4. `ErrorInterceptor`: Maps uncaught `DioException` (timeouts, 400 bad requests, 403 forbidden, 404, 500 server errors, cancellation) into typed domain `Failure` instances with localized/human-readable error messages.
+- **Architectural Boundary**: All network operations are confined to `RemoteDataSource` implementations. ViewModels and Repositories never call `Dio` directly. Repositories wrap data source responses into `Future<Either<Failure, T>>` using `fpdart`.
+
+### 3.2 Race-Condition-Safe Token Refresh Blueprint
+
+Below is the required production blueprint for `AuthInterceptor`. It uses a secondary clean `Dio` instance without interceptors (`_refreshDio`) to prevent infinite recursive 401 loops:
+
+```dart
+import 'package:dio/dio.dart';
+import 'package:get/get.dart' as getx;
+import '../../../core/constants/api_endpoints.dart';
+import '../../../core/routing/route_names.dart';
+import '../../../core/storage/secure_storage_service.dart';
+
+class AuthInterceptor extends QueuedInterceptorsWrapper {
+  final SecureStorageService _storage;
+  final Dio _refreshDio; // Clean Dio instance with NO interceptors attached
+
+  AuthInterceptor({
+    required SecureStorageService storage,
+    required Dio refreshDio,
+  })  : _storage = storage,
+        _refreshDio = refreshDio;
+
+  @override
+  Future<void> onRequest(
+    RequestOptions options,
+    RequestInterceptorHandler handler,
+  ) async {
+    final token = await _storage.getAccessToken();
+    if (token != null && token.isNotEmpty) {
+      options.headers['Authorization'] = 'Bearer $token';
+    }
+    handler.next(options);
+  }
+
+  @override
+  Future<void> onError(
+    DioException err,
+    ErrorInterceptorHandler handler,
+  ) async {
+    if (err.response?.statusCode == 401) {
+      final refreshToken = await _storage.getRefreshToken();
+      if (refreshToken == null || refreshToken.isEmpty) {
+        await _handleLogout();
+        return handler.next(err);
+      }
+
+      try {
+        // QueuedInterceptorsWrapper automatically locks and queues concurrent requests
+        final response = await _refreshDio.post<Map<String, dynamic>>(
+          ApiEndpoints.refreshToken,
+          data: {'refreshToken': refreshToken},
+        );
+
+        final data = response.data;
+        final newAccessToken = data?['accessToken'] as String?;
+        final newRefreshToken = data?['refreshToken'] as String?;
+
+        if (newAccessToken == null || newAccessToken.isEmpty) {
+          throw DioException(
+            requestOptions: err.requestOptions,
+            error: 'Invalid refresh token response payload',
+          );
+        }
+
+        await _storage.saveTokens(
+          accessToken: newAccessToken,
+          refreshToken: newRefreshToken ?? refreshToken,
+        );
+
+        // Update failed request header and replay using clean Dio instance
+        final retryOptions = err.requestOptions;
+        retryOptions.headers['Authorization'] = 'Bearer $newAccessToken';
+        final cloneResponse = await _refreshDio.fetch(retryOptions);
+        return handler.resolve(cloneResponse);
+      } catch (refreshError) {
+        await _handleLogout();
+        return handler.next(err);
+      }
+    }
+    handler.next(err);
+  }
+
+  Future<void> _handleLogout() async {
+    await _storage.clearTokens();
+    getx.Get.offAllNamed(AppRoutes.login);
+  }
+}
+```
+
+### 3.3 ErrorInterceptor Blueprint
+Maps transport-level `DioException` types to domain `Failure` contracts:
+- `DioExceptionType.connectionTimeout`, `sendTimeout`, `receiveTimeout` → `NetworkFailure('Connection timed out. Please try again.')`
+- `DioExceptionType.connectionError` → `NetworkFailure('No internet connection.')`
+- `DioExceptionType.badResponse` → Extracts backend message or returns `ServerFailure('Server error (${statusCode})')`
+- `DioExceptionType.cancel` → Ignored or mapped to custom `CancelledFailure`
 
 ---
 
