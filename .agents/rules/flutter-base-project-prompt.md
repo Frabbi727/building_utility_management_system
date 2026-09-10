@@ -390,93 +390,136 @@ class ErrorState extends ViewState {
 
 ---
 
-## 8. Models & Serialization — `json_serializable` (no hand-written JSON code)
+## 8. Models & Serialization — `json_serializable`
 
-- Every data-layer model (`UserModel`, `LoginResponseModel`, etc.) is annotated:
+- Every data-layer model/DTO in `features/<feature>/data/models/` must be annotated with `@JsonSerializable()`:
+```dart
+import 'package:equatable/equatable.dart';
+import 'package:json_annotation/json_annotation.dart';
 
-  ```dart
-  import 'package:json_annotation/json_annotation.dart';
-  import 'package:equatable/equatable.dart';
+part 'user_model.g.dart';
 
-  part 'user_model.g.dart';
+@JsonSerializable()
+class UserModel extends Equatable {
+  final String id;
+  final String name;
+  final String email;
 
-  @JsonSerializable()
-  class UserModel extends Equatable {
-    final String id;
-    final String name;
-    final String email;
+  const UserModel({
+    required this.id,
+    required this.name,
+    required this.email,
+  });
 
-    const UserModel({required this.id, required this.name, required this.email});
+  factory UserModel.fromJson(Map<String, dynamic> json) =>
+      _$UserModelFromJson(json);
 
-    factory UserModel.fromJson(Map<String, dynamic> json) =>
-        _$UserModelFromJson(json);
-    Map<String, dynamic> toJson() => _$UserModelToJson(this);
+  Map<String, dynamic> toJson() => _$UserModelToJson(this);
 
-    @override
-    List<Object?> get props => [id, name, email];
-  }
-  ```
-
-- The `factory fromJson(...)` / `toJson()` method **signatures** are written by
-  hand (one line each, calling the generated function) — the actual field-by-field
-  parsing logic in `user_model.g.dart` is **always generated**, never hand-written
-  or hand-edited.
-- Generate/regenerate with:
-
+  @override
+  List<Object?> get props => [id, name, email];
+}
+```
+- **Strict Invariant**: The single-line factory `_$ModelFromJson(json)` and method `_$ModelToJson(this)` signatures are written manually; the actual field serialization body is **always generated into `*.g.dart`** via `build_runner`. Never hand-write or manually edit JSON serialization logic.
+- Run code generation:
   ```bash
   dart run build_runner build --delete-conflicting-outputs
-  # during active development:
-  dart run build_runner watch --delete-conflicting-outputs
   ```
-
-- `.g.dart` files are committed to version control (standard for Flutter apps,
-  since CI/CD and other devs shouldn't have to run codegen just to build).
-- Domain-layer **entities** (plain, no JSON) also extend `Equatable` for value
-  equality in UseCases/Controllers, even though they're never serialized directly.
+- **Domain Entities vs Data Models**:
+  - `domain/entities/*.dart`: Pure Dart business representations extending `Equatable`. Strictly **no `json_annotation` or serialization logic**.
+  - `data/models/*.dart`: Concrete DTOs extending `Equatable` that implement or map to/from domain entities (`toEntity()` / `fromEntity()`).
 
 ---
 
-## 9. Localization (Bangla + English)
+## 9. Functional Error Handling — `fpdart` & Typed Failures
 
-- Use `flutter_localizations` + `intl` with `.arb` files (`app_en.arb`, `app_bn.arb`),
-  generated via `flutter gen-l10n`.
-- All user-facing strings go through `context.l10n.someKey` — no hardcoded strings
-  in widgets.
-- Persist selected locale in local cache; provide a `LocaleService`
-  (`Get.updateLocale(Locale('bn', 'BD'))`) to switch language at runtime without
-  restart.
-- Alternative: skip `.arb`/`intl` entirely and use **GetX's built-in
-  `Translations`** class (`Map<String, Map<String, String>>` keyed by locale,
-  strings accessed via `'key'.tr`) — simpler for a small-to-mid app, but `.arb` +
-  `intl` scales better for large string sets and designer/translator handoff.
-  Pick one; don't mix both.
-- Support Bangla numeral/date formatting where relevant (`intl` with `bn` locale,
-  works fine alongside GetX regardless of which translation approach is chosen).
+- **Core Rule**: Avoid untyped exception throwing in domain and presentation layers. Data sources throw low-level `Exceptions`, repositories catch them and return `Either<Failure, T>` using `fpdart`.
+- `core/error/failures.dart`:
+```dart
+import 'package:equatable/equatable.dart';
+
+abstract class Failure extends Equatable {
+  final String message;
+  const Failure(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}
+
+class ServerFailure extends Failure {
+  const ServerFailure([super.message = 'A server error occurred. Please try again.']);
+}
+
+class NetworkFailure extends Failure {
+  const NetworkFailure([super.message = 'No internet connection detected.']);
+}
+
+class CacheFailure extends Failure {
+  const CacheFailure([super.message = 'Failed to load cached data.']);
+}
+
+class AuthFailure extends Failure {
+  const AuthFailure([super.message = 'Authentication failed. Please sign in again.']);
+}
+
+class ValidationFailure extends Failure {
+  const ValidationFailure(super.message);
+}
+```
+- `core/error/exceptions.dart`: Defines low-level transport/storage exceptions (`ServerException`, `CacheException`, `NetworkException`).
+- Controllers consume repository/use case responses via `.fold()`:
+```dart
+final result = await loginUseCase(params);
+result.fold(
+  (failure) => state.value = ErrorState(failure.message),
+  (user) => state.value = SuccessState<UserEntity>(user),
+);
+```
 
 ---
 
-## 10. Theming / Colors / Font Sizes (centralized in `core/theme`)
+## 10. Localization — Official Flutter Arb & Intl (Bangla + English)
 
-- `AppColors` — static const colors + light/dark variants; no raw hex codes in widgets.
-- `AppTextStyles` — named text styles (`heading1`, `bodyMedium`, `caption`, etc.)
-  built on `google_fonts` or a bundled font family.
-- `AppDimens`/spacing — use `flutter_screenutil` (`.sp`, `.w`, `.h`, `.r`) for
-  responsive sizing across devices, defined once and reused everywhere.
-- `AppTheme.light()` / `AppTheme.dark()` — full `ThemeData`, toggle via
-  `ThemeProvider` persisted in cache.
+- **Standardization**: Strictly use Flutter's official `flutter_localizations` + `intl` with `.arb` translation catalogs. Do **NOT** use GetX's `Translations` map class.
+- Root configuration in `l10n.yaml`:
+  ```yaml
+  arb-dir: lib/core/localization/l10n
+  template-arb-file: app_en.arb
+  output-localization-file: app_localizations.dart
+  untranslated-messages-file: untranslated_messages.json
+  ```
+- Translation catalogs:
+  - `lib/core/localization/l10n/app_en.arb`: English strings (template).
+  - `lib/core/localization/l10n/app_bn.arb`: Bangla translations.
+- Code generation:
+  ```bash
+  flutter gen-l10n
+  ```
+- String access via BuildContext extension: `context.l10n.loginTitle` (or helper extension). No hardcoded strings in widgets.
+- Runtime language switching: Persist selection in `LocalCacheService` and execute:
+  ```dart
+  Get.updateLocale(const Locale('bn', 'BD')); // or Locale('en', 'US')
+  ```
+- Support Bangla numeral and calendar formatting using `intl` with `'bn'` locale.
 
 ---
 
-## 11. Error Handling
+## 11. Centralized Theming & Responsive Layout (`core/theme`)
 
-- `core/error/failures.dart` — `Failure` classes extend **`Equatable`**
-  (`ServerFailure`, `NetworkFailure`, `CacheFailure`, `AuthFailure`,
-  `ValidationFailure`), each overriding `props` (typically `[message]`) so two
-  failures with the same message compare equal in tests and state comparisons.
-- `core/error/exceptions.dart` — low-level exceptions thrown by data sources,
-  caught and converted to `Failure` in the Repository layer.
-- A shared `ErrorMapper`/`ErrorHandler` widget or `SnackBar` utility standardizes
-  how failures are shown to the user.
+- **`AppColors`**: Static constant color palette (`AppColors.primary`, `AppColors.backgroundLight`, etc.). Never write raw hex codes (`0xFF...`) directly in UI widgets.
+- **`AppTextStyles`**: Type scale definitions (`headlineLarge`, `bodyMedium`, `labelSmall`) utilizing `google_fonts` or bundled fonts.
+- **`AppDimens` & Responsive Sizing (`flutter_screenutil`)**:
+  - Root initialization in `app.dart`:
+    ```dart
+    ScreenUtilInit(
+      designSize: const Size(375, 812),
+      minTextAdapt: true,
+      splitScreenMode: true,
+      builder: (context, child) => GetMaterialApp(...),
+    )
+    ```
+  - Use responsive extensions (`.w`, `.h`, `.r`, `.sp`) across all dimensions, paddings, and font sizes.
+- **`AppTheme.light()` & `AppTheme.dark()`**: Full `ThemeData` specifications. Theme mode is persisted in `LocalCacheService` and toggled dynamically via `Get.changeThemeMode(ThemeMode.dark)`.
 
 ---
 
