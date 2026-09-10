@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import '../../../../core/constants/api_endpoints.dart';
+import '../../../../core/error/exceptions.dart';
 import '../models/auth_response_model.dart';
 
 abstract class AuthRemoteDataSource {
@@ -16,6 +17,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       ApiEndpoints.login,
       data: <String, dynamic>{'email': email, 'password': password},
     );
-    return AuthResponseModel.fromJson(response.data!);
+    final data = response.data;
+    if (data == null) {
+      throw const ServerException('Received empty response from server');
+    }
+    return AuthResponseModel.fromJson(data);
   }
 }

@@ -65,4 +65,35 @@ void main() {
 
     expect(controller.state.value, equals(const SuccessState<UserEntity>(user)));
   });
+
+  test('onInit initializes emailController and passwordController with empty text', () {
+    controller.onInit();
+
+    expect(controller.emailController.text, equals(''));
+    expect(controller.passwordController.text, equals(''));
+
+    controller.onClose();
+  });
+
+  test('login guards against re-entrancy when state is already LoadingState', () async {
+    final completer = Completer<Either<Failure, UserEntity>>();
+    when(() => mockLoginUseCase(email: 'test@example.com', password: 'password'))
+        .thenAnswer((_) => completer.future);
+
+    final firstLogin = controller.login('test@example.com', 'password');
+    expect(controller.state.value, equals(const LoadingState()));
+
+    // Attempt second login call while still loading
+    final secondLogin = controller.login('test@example.com', 'password');
+
+    completer.complete(
+      const Right<Failure, UserEntity>(
+        UserEntity(id: '1', name: 'User', email: 'test@example.com'),
+      ),
+    );
+    await firstLogin;
+    await secondLogin;
+
+    verify(() => mockLoginUseCase(email: 'test@example.com', password: 'password')).called(1);
+  });
 }

@@ -1,4 +1,5 @@
 import 'package:building_utility_management_system/core/constants/api_endpoints.dart';
+import 'package:building_utility_management_system/core/error/exceptions.dart';
 import 'package:building_utility_management_system/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:building_utility_management_system/features/auth/data/models/auth_response_model.dart';
 import 'package:building_utility_management_system/features/auth/data/models/user_model.dart';
@@ -85,6 +86,32 @@ void main() {
     expect(
       () => dataSource.login(email: email, password: password),
       throwsA(isA<DioException>()),
+    );
+  });
+
+  test('login throws ServerException when response data is null', () async {
+    when(
+      () => mockDio.post<Map<String, dynamic>>(
+        ApiEndpoints.login,
+        data: any<dynamic>(named: 'data'),
+      ),
+    ).thenAnswer(
+      (_) async => Response<Map<String, dynamic>>(
+        requestOptions: RequestOptions(path: ApiEndpoints.login),
+        statusCode: 200,
+        data: null,
+      ),
+    );
+
+    expect(
+      () => dataSource.login(email: email, password: password),
+      throwsA(
+        isA<ServerException>().having(
+          (e) => e.message,
+          'message',
+          'Received empty response from server',
+        ),
+      ),
     );
   });
 }

@@ -58,7 +58,7 @@ void main() {
     expect(find.byKey(const Key('email_field')), findsOneWidget);
     expect(find.byKey(const Key('password_field')), findsOneWidget);
     expect(find.byKey(const Key('login_button')), findsOneWidget);
-    expect(find.text('Login Screen'), findsOneWidget);
+    expect(find.text('Sign In'), findsNWidgets(2));
   });
 
   testWidgets('displays error text when controller state is ErrorState', (tester) async {
@@ -77,7 +77,7 @@ void main() {
     await tester.pump();
 
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
-    expect(find.byKey(const Key('login_button')), findsNothing);
+    expect(find.text('Login'), findsNothing);
   });
 
   testWidgets('pressing login button executes controller.login', (tester) async {
@@ -89,10 +89,14 @@ void main() {
     await tester.pumpWidget(buildTestWidget());
     await tester.pumpAndSettle();
 
+    await tester.enterText(find.byKey(const Key('email_field')), 'user@example.com');
+    await tester.enterText(find.byKey(const Key('password_field')), 'password123');
+    await tester.pumpAndSettle();
+
     await tester.tap(find.byKey(const Key('login_button')));
     await tester.pumpAndSettle();
 
-    verify(() => mockLoginUseCase(email: any(named: 'email'), password: any(named: 'password'))).called(1);
+    verify(() => mockLoginUseCase(email: 'user@example.com', password: 'password123')).called(1);
     expect(find.text('Home'), findsOneWidget);
   });
 }

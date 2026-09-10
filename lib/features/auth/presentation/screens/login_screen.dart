@@ -3,6 +3,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../../../../core/base/view_state.dart';
 import '../../../../core/localization/l10n_ext.dart';
+import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_text_field.dart';
 import '../controllers/auth_controller.dart';
 
 class LoginScreen extends GetView<AuthController> {
@@ -10,9 +12,6 @@ class LoginScreen extends GetView<AuthController> {
 
   @override
   Widget build(BuildContext context) {
-    final emailController = TextEditingController(text: 'user@example.com');
-    final passwordController = TextEditingController(text: 'password123');
-
     return Scaffold(
       appBar: AppBar(title: Text(context.l10n.loginTitle)),
       body: Padding(
@@ -23,41 +22,43 @@ class LoginScreen extends GetView<AuthController> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                'Login Screen',
+                context.l10n.loginTitle,
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
               SizedBox(height: 16.h),
               if (currentState is ErrorState) ...[
                 Text(
                   currentState.message,
-                  style: TextStyle(color: Colors.red, fontSize: 14.sp),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.error,
+                    fontSize: 14.sp,
+                  ),
                 ),
                 SizedBox(height: 12.h),
               ],
-              TextField(
+              AppTextField(
                 key: const Key('email_field'),
-                controller: emailController,
-                decoration: InputDecoration(labelText: context.l10n.emailLabel),
+                controller: controller.emailController,
+                labelText: context.l10n.emailLabel,
+                keyboardType: TextInputType.emailAddress,
               ),
               SizedBox(height: 12.h),
-              TextField(
+              AppTextField(
                 key: const Key('password_field'),
-                controller: passwordController,
+                controller: controller.passwordController,
                 obscureText: true,
-                decoration: InputDecoration(labelText: context.l10n.passwordLabel),
+                labelText: context.l10n.passwordLabel,
               ),
               SizedBox(height: 24.h),
-              if (currentState is LoadingState)
-                const CircularProgressIndicator()
-              else
-                ElevatedButton(
-                  key: const Key('login_button'),
-                  onPressed: () => controller.login(
-                    emailController.text,
-                    passwordController.text,
-                  ),
-                  child: Text(context.l10n.loginButton),
+              AppButton(
+                key: const Key('login_button'),
+                text: context.l10n.loginButton,
+                isLoading: currentState is LoadingState,
+                onPressed: () => controller.login(
+                  controller.emailController.text,
+                  controller.passwordController.text,
                 ),
+              ),
             ],
           );
         }),

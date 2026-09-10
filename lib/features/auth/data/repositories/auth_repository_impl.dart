@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:fpdart/fpdart.dart';
+import '../../../../core/error/exceptions.dart';
 import '../../../../core/error/failures.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
@@ -27,6 +28,8 @@ class AuthRepositoryImpl implements AuthRepository {
         refreshToken: response.refreshToken,
       );
       return Right(response.user.toEntity());
+    } on CacheException catch (e) {
+      return Left(CacheFailure(e.message));
     } on DioException catch (e) {
       final failure = e.error is Failure
           ? e.error! as Failure

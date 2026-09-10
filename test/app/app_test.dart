@@ -2,6 +2,7 @@ import 'package:building_utility_management_system/app/app.dart';
 import 'package:building_utility_management_system/app/flavors/app_flavor.dart';
 import 'package:building_utility_management_system/core/storage/local_cache_service.dart';
 import 'package:building_utility_management_system/core/storage/secure_storage_service.dart';
+import 'package:building_utility_management_system/features/auth/presentation/screens/login_screen.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:mocktail/mocktail.dart';
@@ -30,6 +31,7 @@ void main() {
     await tester.pumpWidget(const MainApp());
     await tester.pumpAndSettle();
 
-    expect(find.text('Login Screen'), findsOneWidget);
+    expect(find.byType(LoginScreen), findsOneWidget);
+    expect(find.text('Sign In'), findsWidgets);
   });
 }

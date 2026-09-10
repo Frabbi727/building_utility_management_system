@@ -1,3 +1,4 @@
+import 'package:building_utility_management_system/core/error/exceptions.dart';
 import 'package:building_utility_management_system/core/error/failures.dart';
 import 'package:building_utility_management_system/features/auth/data/datasources/auth_local_data_source.dart';
 import 'package:building_utility_management_system/features/auth/data/datasources/auth_remote_data_source.dart';
@@ -96,6 +97,31 @@ void main() {
 
     expect(result, equals(const Left<Failure, UserEntity>(ServerFailure('Connection timed out'))));
     verifyZeroInteractions(mockLocalDataSource);
+  });
+
+  test('login returns Left(CacheFailure) when CacheException is thrown while saving tokens', () async {
+    when(() => mockRemoteDataSource.login(email: email, password: password))
+        .thenAnswer((_) async => responseModel);
+    when(
+      () => mockLocalDataSource.saveTokens(
+        accessToken: responseModel.accessToken,
+        refreshToken: responseModel.refreshToken,
+      ),
+    ).thenThrow(const CacheException('Failed to save tokens to secure storage'));
+
+    final result = await repository.login(email: email, password: password);
+
+    expect(
+      result,
+      equals(const Left<Failure, UserEntity>(CacheFailure('Failed to save tokens to secure storage'))),
+    );
+    verify(() => mockRemoteDataSource.login(email: email, password: password)).called(1);
+    verify(
+      () => mockLocalDataSource.saveTokens(
+        accessToken: responseModel.accessToken,
+        refreshToken: responseModel.refreshToken,
+      ),
+    ).called(1);
   });
 
   test('login returns Left(ServerFailure) when an unexpected generic exception occurs', () async {
