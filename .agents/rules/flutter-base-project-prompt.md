@@ -273,7 +273,7 @@ void onError(DioException err, ErrorInterceptorHandler handler) {
 ```dart
 import 'package:equatable/equatable.dart';
 
-abstract class ViewState extends Equatable {
+sealed class ViewState extends Equatable {
   const ViewState();
   @override
   List<Object?> get props => [];
@@ -316,8 +316,10 @@ class ErrorState extends ViewState {
   - Registered globally on `GetMaterialApp(initialBinding: InitialBinding())`.
   - Binds permanent core infrastructure services:
   ```dart
+  import 'package:connectivity_plus/connectivity_plus.dart';
   import 'package:get/get.dart';
   import '../network/dio_client.dart';
+  import '../network/network_info.dart';
   import '../storage/local_cache_service.dart';
   import '../storage/secure_storage_service.dart';
 
@@ -326,7 +328,8 @@ class ErrorState extends ViewState {
     void dependencies() {
       Get.put<SecureStorageService>(SecureStorageService(), permanent: true);
       Get.put<LocalCacheService>(LocalCacheService(), permanent: true);
-      Get.put<DioClient>(DioClient(storage: Get.find()), permanent: true);
+      Get.put<NetworkInfo>(NetworkInfoImpl(Connectivity()), permanent: true);
+      Get.put<DioClient>(DioClient(storage: Get.find<SecureStorageService>()), permanent: true);
     }
   }
   ```
@@ -335,6 +338,8 @@ class ErrorState extends ViewState {
   ```dart
   import 'package:get/get.dart';
   import '../../../../core/network/dio_client.dart';
+  import '../../../../core/storage/secure_storage_service.dart';
+  import '../../data/datasources/auth_local_data_source.dart';
   import '../../data/datasources/auth_remote_data_source.dart';
   import '../../data/repositories/auth_repository_impl.dart';
   import '../../domain/repositories/auth_repository.dart';
@@ -347,14 +352,21 @@ class ErrorState extends ViewState {
       Get.lazyPut<AuthRemoteDataSource>(
         () => AuthRemoteDataSourceImpl(dio: Get.find<DioClient>().dio),
       );
+      Get.lazyPut<AuthLocalDataSource>(
+        () => AuthLocalDataSourceImpl(storageService: Get.find<SecureStorageService>()),
+      );
       Get.lazyPut<AuthRepository>(
         () => AuthRepositoryImpl(
-          remoteDataSource: Get.find(),
-          storageService: Get.find(),
+          remoteDataSource: Get.find<AuthRemoteDataSource>(),
+          localDataSource: Get.find<AuthLocalDataSource>(),
         ),
       );
-      Get.lazyPut<LoginUseCase>(() => LoginUseCase(repository: Get.find()));
-      Get.lazyPut<AuthController>(() => AuthController(loginUseCase: Get.find()));
+      Get.lazyPut<LoginUseCase>(
+        () => LoginUseCase(repository: Get.find<AuthRepository>()),
+      );
+      Get.lazyPut<AuthController>(
+        () => AuthController(loginUseCase: Get.find<LoginUseCase>()),
+      );
     }
   }
   ```
