@@ -68,6 +68,16 @@ void main() {
       verify(() => mockBox.get('test_key', defaultValue: 'default')).called(1);
     });
 
+    test('getInt delegates to get<int>', () {
+      when(() => mockBox.get('int_key', defaultValue: any<dynamic>(named: 'defaultValue')))
+          .thenReturn(42);
+
+      final result = serviceWithBox.getInt('int_key');
+
+      expect(result, equals(42));
+      verify(() => mockBox.get('int_key', defaultValue: null)).called(1);
+    });
+
     test('put saves value into box', () async {
       when(() => mockBox.put('save_key', 'save_val'))
           .thenAnswer((_) async {});
@@ -75,6 +85,15 @@ void main() {
       await serviceWithBox.put<String>('save_key', 'save_val');
 
       verify(() => mockBox.put('save_key', 'save_val')).called(1);
+    });
+
+    test('putInt delegates to put<int>', () async {
+      when(() => mockBox.put('int_key', 42))
+          .thenAnswer((_) async {});
+
+      await serviceWithBox.putInt('int_key', 42);
+
+      verify(() => mockBox.put('int_key', 42)).called(1);
     });
 
     test('delete removes key from box', () async {

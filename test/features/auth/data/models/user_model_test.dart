@@ -7,17 +7,43 @@ void main() {
     id: 'user-123',
     name: 'Jane Doe',
     email: 'jane@example.com',
+    phone: '01700000000',
+    isOwner: true,
+    isTenant: false,
   );
 
   const jsonMap = <String, dynamic>{
     'id': 'user-123',
     'name': 'Jane Doe',
     'email': 'jane@example.com',
+    'phone': '01700000000',
+    'is_owner': true,
+    'is_tenant': false,
   };
 
-  test('UserModel fromJson deserializes correctly', () {
+  test('UserModel fromJson deserializes correctly with string id', () {
     final result = UserModel.fromJson(jsonMap);
     expect(result, equals(model));
+  });
+
+  test('UserModel fromJson safely parses integer id into string', () {
+    final mapWithIntId = <String, dynamic>{
+      'id': 123,
+      'name': 'Jane Doe',
+      'email': 'jane@example.com',
+    };
+    final result = UserModel.fromJson(mapWithIntId);
+    expect(result.id, equals('123'));
+  });
+
+  test('UserModel fromJson safely handles null id', () {
+    final mapWithNullId = <String, dynamic>{
+      'id': null,
+      'name': 'Jane Doe',
+      'email': 'jane@example.com',
+    };
+    final result = UserModel.fromJson(mapWithNullId);
+    expect(result.id, equals(''));
   });
 
   test('UserModel toJson serializes correctly', () {
@@ -25,7 +51,7 @@ void main() {
     expect(result, equals(jsonMap));
   });
 
-  test('UserModel toEntity maps to UserEntity', () {
+  test('UserModel toEntity maps to UserEntity with optional fields', () {
     final entity = model.toEntity();
     expect(
       entity,
@@ -33,6 +59,9 @@ void main() {
         id: 'user-123',
         name: 'Jane Doe',
         email: 'jane@example.com',
+        phone: '01700000000',
+        isOwner: true,
+        isTenant: false,
       )),
     );
   });
@@ -42,6 +71,9 @@ void main() {
       id: 'user-123',
       name: 'Jane Doe',
       email: 'jane@example.com',
+      phone: '01700000000',
+      isOwner: true,
+      isTenant: false,
     );
     expect(model, equals(model2));
   });

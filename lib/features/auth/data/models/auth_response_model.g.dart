@@ -8,14 +8,17 @@ part of 'auth_response_model.dart';
 
 AuthResponseModel _$AuthResponseModelFromJson(Map<String, dynamic> json) =>
     AuthResponseModel(
-      accessToken: json['accessToken'] as String,
-      refreshToken: json['refreshToken'] as String,
+      token: json['token'] as String,
       user: UserModel.fromJson(json['user'] as Map<String, dynamic>),
+      flats: (json['flats'] as List<dynamic>?)
+              ?.map((e) => FlatModel.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
     );
 
 Map<String, dynamic> _$AuthResponseModelToJson(AuthResponseModel instance) =>
     <String, dynamic>{
-      'accessToken': instance.accessToken,
-      'refreshToken': instance.refreshToken,
+      'token': instance.token,
       'user': instance.user.toJson(),
+      'flats': instance.flats.map((e) => e.toJson()).toList(),
     };

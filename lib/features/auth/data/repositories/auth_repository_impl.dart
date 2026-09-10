@@ -1,7 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:fpdart/fpdart.dart';
+import 'package:get/get.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/error/failures.dart';
+import '../../../../shared/services/flat_context_service.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_local_data_source.dart';
@@ -10,10 +12,12 @@ import '../datasources/auth_remote_data_source.dart';
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource remoteDataSource;
   final AuthLocalDataSource localDataSource;
+  final FlatContextService? flatContextService;
 
   const AuthRepositoryImpl({
     required this.remoteDataSource,
     required this.localDataSource,
+    this.flatContextService,
   });
 
   @override
@@ -24,9 +28,14 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       final response = await remoteDataSource.login(email: email, password: password);
       await localDataSource.saveTokens(
-        accessToken: response.accessToken,
-        refreshToken: response.refreshToken,
+        accessToken: response.token,
+        refreshToken: response.token,
       );
+      final fcs = flatContextService ??
+          (Get.isRegistered<FlatContextService>() ? Get.find<FlatContextService>() : null);
+      if (fcs != null) {
+        fcs.initializeFlats(response.flats.map((f) => f.toEntity()).toList());
+      }
       return Right(response.user.toEntity());
     } on CacheException catch (e) {
       return Left(CacheFailure(e.message));

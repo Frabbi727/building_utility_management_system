@@ -15,12 +15,16 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   Future<AuthResponseModel> login({required String email, required String password}) async {
     final response = await dio.post<Map<String, dynamic>>(
       ApiEndpoints.login,
-      data: <String, dynamic>{'email': email, 'password': password},
+      data: <String, dynamic>{'login': email, 'password': password},
     );
-    final data = response.data;
-    if (data == null) {
+    final body = response.data;
+    if (body == null) {
       throw const ServerException('Received empty response from server');
     }
-    return AuthResponseModel.fromJson(data);
+    final data = body['data'];
+    if (data is Map<String, dynamic>) {
+      return AuthResponseModel.fromJson(data);
+    }
+    return AuthResponseModel.fromJson(body);
   }
 }

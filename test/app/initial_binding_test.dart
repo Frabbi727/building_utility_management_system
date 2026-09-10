@@ -4,6 +4,7 @@ import 'package:building_utility_management_system/core/network/dio_client.dart'
 import 'package:building_utility_management_system/core/network/network_info.dart';
 import 'package:building_utility_management_system/core/storage/local_cache_service.dart';
 import 'package:building_utility_management_system/core/storage/secure_storage_service.dart';
+import 'package:building_utility_management_system/shared/services/flat_context_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:mocktail/mocktail.dart';
@@ -27,9 +28,10 @@ void main() {
   });
 
   group('InitialBinding', () {
-    test('registers SecureStorageService, LocalCacheService, NetworkInfo, and DioClient', () {
+    test('registers SecureStorageService, LocalCacheService, FlatContextService, NetworkInfo, and DioClient', () {
       expect(Get.isRegistered<SecureStorageService>(), isFalse);
       expect(Get.isRegistered<LocalCacheService>(), isFalse);
+      expect(Get.isRegistered<FlatContextService>(), isFalse);
       expect(Get.isRegistered<NetworkInfo>(), isFalse);
       expect(Get.isRegistered<DioClient>(), isFalse);
 
@@ -40,6 +42,9 @@ void main() {
 
       expect(Get.isRegistered<LocalCacheService>(), isTrue);
       expect(Get.find<LocalCacheService>(), isA<LocalCacheService>());
+
+      expect(Get.isRegistered<FlatContextService>(), isTrue);
+      expect(Get.find<FlatContextService>(), isA<FlatContextService>());
 
       expect(Get.isRegistered<NetworkInfo>(), isTrue);
       expect(Get.find<NetworkInfo>(), isA<NetworkInfo>());
@@ -52,15 +57,18 @@ void main() {
       final mockStorage = MockSecureStorageService();
       final mockNetwork = MockNetworkInfo();
       final localCache = LocalCacheService();
+      final flatContext = FlatContextService(cacheService: localCache);
 
       Get.put<SecureStorageService>(mockStorage, permanent: true);
       Get.put<LocalCacheService>(localCache, permanent: true);
+      Get.put<FlatContextService>(flatContext, permanent: true);
       Get.put<NetworkInfo>(mockNetwork, permanent: true);
 
       InitialBinding().dependencies();
 
       expect(Get.find<SecureStorageService>(), same(mockStorage));
       expect(Get.find<LocalCacheService>(), same(localCache));
+      expect(Get.find<FlatContextService>(), same(flatContext));
       expect(Get.find<NetworkInfo>(), same(mockNetwork));
       expect(Get.isRegistered<DioClient>(), isTrue);
     });

@@ -22,8 +22,16 @@ class LocalCacheService {
     return _activeBox.get(key, defaultValue: defaultValue) as T?;
   }
 
+  int? getInt(String key, {int? defaultValue}) {
+    return get<int>(key, defaultValue: defaultValue);
+  }
+
   Future<void> put<T>(String key, T value) async {
     await _activeBox.put(key, value);
+  }
+
+  Future<void> putInt(String key, int value) async {
+    await put<int>(key, value);
   }
 
   Future<void> delete(String key) async {

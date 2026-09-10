@@ -7,6 +7,7 @@ import '../core/network/network_info.dart';
 import '../core/routing/route_names.dart';
 import '../core/storage/local_cache_service.dart';
 import '../core/storage/secure_storage_service.dart';
+import '../shared/services/flat_context_service.dart';
 import 'app.dart';
 import 'flavors/app_flavor.dart';
 
@@ -17,8 +18,15 @@ class InitialBinding extends Bindings {
         ? Get.find<SecureStorageService>()
         : Get.put<SecureStorageService>(SecureStorageService(), permanent: true);
 
-    if (!Get.isRegistered<LocalCacheService>()) {
-      Get.put<LocalCacheService>(LocalCacheService(), permanent: true);
+    final localCache = Get.isRegistered<LocalCacheService>()
+        ? Get.find<LocalCacheService>()
+        : Get.put<LocalCacheService>(LocalCacheService(), permanent: true);
+
+    if (!Get.isRegistered<FlatContextService>()) {
+      Get.put<FlatContextService>(
+        FlatContextService(cacheService: localCache),
+        permanent: true,
+      );
     }
 
     final networkInfo = Get.isRegistered<NetworkInfo>()
@@ -48,6 +56,8 @@ Future<void> bootstrap() async {
 
   final localCache = Get.put<LocalCacheService>(LocalCacheService(), permanent: true);
   await localCache.init();
+
+  Get.put<FlatContextService>(FlatContextService(cacheService: localCache), permanent: true);
 
   runApp(const MainApp());
 }
