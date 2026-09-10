@@ -267,57 +267,119 @@ void onError(DioException err, ErrorInterceptorHandler handler) {
 
 ---
 
-## 4. Token Handling & Caching
+## 4. State Management (GetX) & UI State Modeling
 
-- Store `accessToken` / `refreshToken` in `flutter_secure_storage` — never in
-  plain `SharedPreferences`.
-- `TokenService` (or `AuthLocalDataSource`) exposes `getAccessToken()`,
-  `saveTokens()`, `clearTokens()`, `getRefreshToken()`.
-- Cache **non-sensitive** app/user data (last-viewed screen, cached profile,
-  language, theme mode) in `Hive` or `SharedPreferences` for fast cold-start reads
-  and offline-first UX.
-- On refresh-token failure → clear tokens + cache → navigate to login (via a global
-  `AuthStateNotifier`/stream the router listens to, not a hard `Navigator` call
-  buried in an interceptor).
+### 4.1 Reactive State with Value Equality
+- Model UI state as an immutable hierarchy extending `Equatable`:
+```dart
+import 'package:equatable/equatable.dart';
 
----
+abstract class ViewState extends Equatable {
+  const ViewState();
+  @override
+  List<Object?> get props => [];
+}
 
-## 5. Repository Pattern
+class IdleState extends ViewState {
+  const IdleState();
+}
 
-- `domain/repositories/*.dart` — abstract interfaces, pure Dart, no Flutter/Dio imports.
-- `data/repositories/*_impl.dart` — implements the interface, decides
-  remote vs local data source, converts DTO → Entity.
-- ViewModels depend only on the abstract repository (or a UseCase wrapping it),
-  injected through `get_it`. This keeps ViewModels unit-testable with mocked
-  repositories (`mocktail`).
+class LoadingState extends ViewState {
+  const LoadingState();
+}
 
----
+class SuccessState<T> extends ViewState {
+  final T data;
+  const SuccessState(this.data);
+  @override
+  List<Object?> get props => [data];
+}
 
-## 6. State Management — GetX
-
-- Use **GetX** (`get` package) for state management, DI, and routing together —
-  no need for `get_it`/`injectable`/`go_router` on top of it.
-- Each screen/feature has one `Controller extends GetxController`:
-  - Reactive state via `.obs` fields (`RxBool isLoading`, `Rxn<UserModel> user`,
-    `Rx<ViewState> state`) — avoid overusing `GetBuilder` unless you specifically
-    want non-reactive, manual `update()` control for performance-sensitive lists.
-  - Model UI state as an enum/sealed-style class (`ViewState.idle/loading/success/
-    error`) rather than scattering multiple loose booleans. If the state class
-    carries data, extend **`Equatable`** and override `props` for value equality
-    (instead of `freezed` unions) so GetX's reactivity/`Obx` rebuilds correctly
-    only when the state actually changes.
-  - Controllers call UseCases/Repositories — **never** call `Dio` or
-    `GetConnect` directly from a Controller.
-- Use **`Bindings`** (`AuthBinding`, `HomeBinding`) to lazily inject a screen's
-  Controller + its dependencies only when that route is visited
-  (`Get.lazyPut<AuthController>(() => AuthController(Get.find()))`), keeping
-  memory usage low and avoiding a giant global `main.dart` DI file.
-- Screens use `GetView<AuthController>` or `GetWidget<AuthController>` instead of
-  `StatefulWidget` + manual controller wiring.
+class ErrorState extends ViewState {
+  final String message;
+  const ErrorState(this.message);
+  @override
+  List<Object?> get props => [message];
+}
+```
+- In `GetxController`:
+  - Declare reactive state: `final state = Rx<ViewState>(const IdleState());`
+  - Rebuild views reactively using `Obx(() => ...)` targeting only state-dependent widgets.
+  - Controllers coordinate UseCases/Repositories and never interact directly with Dio, storage, or low-level data sources.
+- Screens extend `GetView<TController>` (or `GetWidget<TController>`) instead of `StatefulWidget` for clean, boilerplate-free controller access via `controller`.
 
 ---
 
-## 7. Models & Serialization — `json_serializable` (no hand-written JSON code)
+## 5. Dependency Injection — GetX Bindings
+
+- **Single DI Mechanism**: Strictly use GetX Bindings (`Get.put`, `Get.lazyPut`, `Get.find`). Strictly **ZERO references to `get_it` or `injectable`**.
+- **`InitialBinding` (Core Permanent Singletons)**:
+  - Registered globally on `GetMaterialApp(initialBinding: InitialBinding())`.
+  - Binds permanent core infrastructure services:
+  ```dart
+  import 'package:get/get.dart';
+  import '../network/dio_client.dart';
+  import '../storage/local_cache_service.dart';
+  import '../storage/secure_storage_service.dart';
+
+  class InitialBinding extends Bindings {
+    @override
+    void dependencies() {
+      Get.put<SecureStorageService>(SecureStorageService(), permanent: true);
+      Get.put<LocalCacheService>(LocalCacheService(), permanent: true);
+      Get.put<DioClient>(DioClient(storage: Get.find()), permanent: true);
+    }
+  }
+  ```
+- **Feature `Bindings` (Route-Scoped Lazy Injection)**:
+  - Injected lazily only when route is visited and disposed on route pop (unless `fenix: true` is configured):
+  ```dart
+  import 'package:get/get.dart';
+  import '../../features/auth/data/datasources/auth_remote_data_source.dart';
+  import '../../features/auth/data/repositories/auth_repository_impl.dart';
+  import '../../features/auth/domain/repositories/auth_repository.dart';
+  import '../../features/auth/domain/usecases/login_usecase.dart';
+  import '../../features/auth/presentation/controllers/auth_controller.dart';
+  import '../network/dio_client.dart';
+
+  class AuthBinding extends Bindings {
+    @override
+    void dependencies() {
+      Get.lazyPut<AuthRemoteDataSource>(
+        () => AuthRemoteDataSourceImpl(dio: Get.find<DioClient>().dio),
+      );
+      Get.lazyPut<AuthRepository>(
+        () => AuthRepositoryImpl(
+          remoteDataSource: Get.find(),
+          storageService: Get.find(),
+        ),
+      );
+      Get.lazyPut<LoginUseCase>(() => LoginUseCase(repository: Get.find()));
+      Get.lazyPut<AuthController>(() => AuthController(loginUseCase: Get.find()));
+    }
+  }
+  ```
+- Repositories and UseCases are always defined as abstract interfaces in `domain/`; concrete implementations are wired in `Bindings`.
+
+---
+
+## 6. Storage Strategy & Separation of Concerns
+
+- **`SecureStorageService` (`flutter_secure_storage`)**: Exclusively stores sensitive credentials (`accessToken`, `refreshToken`, encryption keys). Never store raw credentials or auth tokens in unencrypted storage.
+- **`LocalCacheService` (`hive_flutter`)**: Stores non-sensitive app and user data (cached user profiles, theme mode, selected language/locale, app settings) for fast cold-start reads and offline capability.
+- **Session Revocation & Auth Event Bus**: When token refresh fails or user logs out, `SecureStorageService` and `LocalCacheService` session caches are cleared, and a reactive auth state stream or `onAuthenticationExpired` callback notifies the routing layer to execute `Get.offAllNamed(AppRoutes.login)`.
+
+---
+
+## 7. Repository Pattern & Architectural Boundaries
+
+- `domain/repositories/*.dart`: Pure Dart abstract interfaces. Zero imports from `flutter/`, `dio`, `get`, or third-party serialization libraries.
+- `data/repositories/*_impl.dart`: Implements the domain contract, orchestrates `RemoteDataSource` and `LocalDataSource`, maps DTOs to domain `Entity` objects, and returns `Future<Either<Failure, T>>` using `fpdart`.
+- ViewModels / Controllers depend only on abstract repository interfaces or UseCases, injected via GetX Bindings (`Get.find()`).
+
+---
+
+## 8. Models & Serialization — `json_serializable` (no hand-written JSON code)
 
 - Every data-layer model (`UserModel`, `LoginResponseModel`, etc.) is annotated:
 
@@ -363,7 +425,7 @@ void onError(DioException err, ErrorInterceptorHandler handler) {
 
 ---
 
-## 8. Localization (Bangla + English)
+## 9. Localization (Bangla + English)
 
 - Use `flutter_localizations` + `intl` with `.arb` files (`app_en.arb`, `app_bn.arb`),
   generated via `flutter gen-l10n`.
@@ -382,7 +444,7 @@ void onError(DioException err, ErrorInterceptorHandler handler) {
 
 ---
 
-## 9. Theming / Colors / Font Sizes (centralized in `core/theme`)
+## 10. Theming / Colors / Font Sizes (centralized in `core/theme`)
 
 - `AppColors` — static const colors + light/dark variants; no raw hex codes in widgets.
 - `AppTextStyles` — named text styles (`heading1`, `bodyMedium`, `caption`, etc.)
@@ -394,7 +456,7 @@ void onError(DioException err, ErrorInterceptorHandler handler) {
 
 ---
 
-## 10. Error Handling
+## 11. Error Handling
 
 - `core/error/failures.dart` — `Failure` classes extend **`Equatable`**
   (`ServerFailure`, `NetworkFailure`, `CacheFailure`, `AuthFailure`,
@@ -404,22 +466,6 @@ void onError(DioException err, ErrorInterceptorHandler handler) {
   caught and converted to `Failure` in the Repository layer.
 - A shared `ErrorMapper`/`ErrorHandler` widget or `SnackBar` utility standardizes
   how failures are shown to the user.
-
----
-
-## 11. Dependency Injection — GetX Bindings
-
-- No `get_it`/`injectable`. Use GetX's built-in service locator:
-  - **`InitialBinding`** (set as `GetMaterialApp(initialBinding: ...)`) —
-    `Get.put<DioClient>(DioClient(), permanent: true)`, plus storage services
-    and any repository needed app-wide (e.g., `AuthRepository`, since the auth
-    interceptor and route guards both need it).
-  - **Per-feature `Bindings`** — `Get.lazyPut<X>()` for controllers/repositories
-    only needed on that screen, auto-disposed when the route is popped
-    (unless `fenix: true` is set for controllers you want recreated on demand).
-- Repositories/UseCases are still coded against **abstract interfaces**; the
-  concrete implementation is what gets bound in `Get.put`/`Get.lazyPut`, so
-  swapping implementations (e.g., for tests) doesn't touch Controllers.
 
 ---
 
