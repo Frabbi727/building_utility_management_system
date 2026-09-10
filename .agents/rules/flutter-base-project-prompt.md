@@ -42,6 +42,7 @@ lib/
 │   └── flavors/                    # dev / staging / prod flavor configurations
 │
 ├── core/
+│   ├── base/                       # view_state.dart (sealed class ViewState)
 │   ├── bindings/                   # initial_binding.dart (permanent singletons: DioClient, storage)
 │   ├── constants/                  # app_constants.dart, api_endpoints.dart
 │   ├── error/                      # failures.dart (Equatable), exceptions.dart
@@ -271,6 +272,7 @@ void onError(DioException err, ErrorInterceptorHandler handler) {
 
 ## 4. State Management (GetX) & UI State Modeling
 
+### `core/base/view_state.dart`
 - Model UI state as an immutable hierarchy extending `Equatable`:
 ```dart
 import 'package:equatable/equatable.dart';
@@ -378,7 +380,7 @@ class ErrorState extends ViewState {
 
 ## 6. Storage Strategy & Separation of Concerns
 
-- **`SecureStorageService` (`flutter_secure_storage`)**: Exclusively stores sensitive credentials (`accessToken`, `refreshToken`, encryption keys). Never store raw credentials or auth tokens in unencrypted storage.
+- **`SecureStorageService` (`flutter_secure_storage`)**: Exclusively stores sensitive credentials (`accessToken`, `refreshToken`, encryption keys). Never store raw credentials or auth tokens in unencrypted storage. Maintains a synchronous in-memory `String? get cachedAccessToken` (cached in memory on init, updated on `saveTokens()`, cleared on `clearTokens()`) so route middlewares like `AuthMiddleware` can check authentication synchronously without async latency.
 - **`LocalCacheService` (`hive_flutter`)**: Stores non-sensitive app and user data (cached user profiles, theme mode, selected language/locale, app settings) for fast cold-start reads and offline capability.
 - **Session Revocation & Auth Event Bus**: When token refresh fails or user logs out, `SecureStorageService` and `LocalCacheService` session caches are cleared, and a reactive auth state stream or `onAuthenticationExpired` callback notifies the routing layer to execute `Get.offAllNamed(AppRoutes.login)`.
 
@@ -579,7 +581,7 @@ result.fold(
     RouteSettings? redirect(String? route) {
       final storage = Get.find<SecureStorageService>();
       final token = storage.cachedAccessToken; // Synchronous cached token check
-      if (token == null || token.isEmpty) {
+      if (route != AppRoutes.login && (token == null || token.isEmpty)) {
         return const RouteSettings(name: AppRoutes.login);
       }
       return null;
@@ -789,7 +791,7 @@ class LoginScreen extends GetView<AuthController> {
 | Value Equality | `equatable` | `^2.0.5` | Equality on entities, models, failures, and UI states |
 | Model Serialization | `json_annotation` | `^4.9.0` | Annotations for code generator |
 | Secure Storage | `flutter_secure_storage` | `^9.2.2` | Encrypted JWT token persistence |
-| Offline Cache | `hive`, `hive_flutter` | `^2.2.3` | User preferences, theme, and locale cache |
+| Offline Cache | `hive`, `hive_flutter` | `^2.2.3` (hive), `^1.1.0` (hive_flutter) | User preferences, theme, and locale cache |
 | Responsive Layout | `flutter_screenutil` | `^5.9.3` | Adaptive typography and spacing (`.w`, `.h`, `.sp`) |
 | Typography | `google_fonts` | `^6.2.1` | Cloud font loader with local asset fallback |
 | Localization | `intl`, `flutter_localizations` | `^0.19.0`, `sdk: flutter` | Official `.arb` catalog code generation |
@@ -808,11 +810,14 @@ class LoginScreen extends GetView<AuthController> {
   ```dart
   import 'package:flutter_test/flutter_test.dart';
   import 'package:fpdart/fpdart.dart';
+  import 'package:get/get.dart';
   import 'package:mocktail/mocktail.dart';
-  import 'package:my_app/core/base/view_state.dart';
-  import 'package:my_app/features/auth/domain/entities/user_entity.dart';
-  import 'package:my_app/features/auth/domain/usecases/login_usecase.dart';
-  import 'package:my_app/features/auth/presentation/controllers/auth_controller.dart';
+  // Note: Replace <app_name> with the package name from pubspec.yaml
+  import 'package:<app_name>/core/base/view_state.dart';
+  import 'package:<app_name>/core/error/failures.dart';
+  import 'package:<app_name>/features/auth/domain/entities/user_entity.dart';
+  import 'package:<app_name>/features/auth/domain/usecases/login_usecase.dart';
+  import 'package:<app_name>/features/auth/presentation/controllers/auth_controller.dart';
 
   class MockLoginUseCase extends Mock implements LoginUseCase {}
 
@@ -826,6 +831,8 @@ class LoginScreen extends GetView<AuthController> {
       mockLoginUseCase = MockLoginUseCase();
       controller = AuthController(loginUseCase: mockLoginUseCase);
     });
+
+    tearDown(() => Get.reset());
 
     test('initial state should be IdleState', () {
       expect(controller.state.value, equals(const IdleState()));
@@ -843,6 +850,21 @@ class LoginScreen extends GetView<AuthController> {
       expect(controller.state.value, equals(const LoadingState()));
       await future;
       expect(controller.state.value, equals(const SuccessState<UserEntity>(tUser)));
+    });
+
+    test('should emit [LoadingState, ErrorState] when login fails', () async {
+      // Arrange
+      const tFailure = ServerFailure('Invalid credentials');
+      when(() => mockLoginUseCase(email: any(named: 'email'), password: any(named: 'password')))
+          .thenAnswer((_) async => const Left(tFailure));
+
+      // Act
+      final future = controller.login('john@example.com', 'wrong_password');
+
+      // Assert
+      expect(controller.state.value, equals(const LoadingState()));
+      await future;
+      expect(controller.state.value, equals(const ErrorState('Invalid credentials')));
     });
   }
   ```
@@ -865,7 +887,7 @@ When an AI coding assistant is tasked with scaffolding this starter project, it 
      ```
 2. **Phase 2: Core Infrastructure Scaffolding**
    - Scaffold `lib/app/` (`app.dart`, `bootstrap.dart`, `flavors/`).
-   - Scaffold `lib/core/` (`network/`, `storage/`, `localization/`, `routing/`, `theme/`, `error/`, `utils/`, `widgets/`).
+   - Scaffold `lib/core/` (`base/`, `bindings/`, `constants/`, `error/`, `localization/`, `network/`, `routing/`, `storage/`, `theme/`, `utils/`, `widgets/`).
 3. **Phase 3: Reference Vertical Slice**
    - Implement `lib/features/auth/` end-to-end following Section 14 blueprints.
    - Implement `app_en.arb` and `app_bn.arb` with authentication translation keys.
