@@ -31,4 +31,70 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homeTitle => 'Dashboard';
+
+  @override
+  String get navHome => 'Home';
+
+  @override
+  String get navBills => 'Bills';
+
+  @override
+  String get navPayments => 'Payments';
+
+  @override
+  String get navMaintenance => 'Maintenance';
+
+  @override
+  String get totalDue => 'Total Due';
+
+  @override
+  String get advanceHeld => 'Advance Held';
+
+  @override
+  String get currentMonthCharges => 'Current Month Charges';
+
+  @override
+  String get arrears => 'Arrears';
+
+  @override
+  String get payNow => 'Pay Now';
+
+  @override
+  String get allClear => 'All Clear';
+
+  @override
+  String get noDues => 'No Dues';
+
+  @override
+  String get latestBill => 'Latest Bill';
+
+  @override
+  String get viewBill => 'View Bill';
+
+  @override
+  String get dueDate => 'Due Date';
+
+  @override
+  String get buildingNotices => 'Building Notices';
+
+  @override
+  String get noNotices => 'No Notices';
+
+  @override
+  String get recentActivity => 'Recent Activity';
+
+  @override
+  String get quickActions => 'Quick Actions';
+
+  @override
+  String get selectFlat => 'Select Flat';
+
+  @override
+  String get switchFlat => 'Switch Flat';
+
+  @override
+  String get noFlatsAssigned => 'No flats assigned';
+
+  @override
+  String get retry => 'Retry';
 }

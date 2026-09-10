@@ -145,6 +145,138 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Dashboard'**
   String get homeTitle;
+
+  /// No description provided for @navHome.
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get navHome;
+
+  /// No description provided for @navBills.
+  ///
+  /// In en, this message translates to:
+  /// **'Bills'**
+  String get navBills;
+
+  /// No description provided for @navPayments.
+  ///
+  /// In en, this message translates to:
+  /// **'Payments'**
+  String get navPayments;
+
+  /// No description provided for @navMaintenance.
+  ///
+  /// In en, this message translates to:
+  /// **'Maintenance'**
+  String get navMaintenance;
+
+  /// No description provided for @totalDue.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Due'**
+  String get totalDue;
+
+  /// No description provided for @advanceHeld.
+  ///
+  /// In en, this message translates to:
+  /// **'Advance Held'**
+  String get advanceHeld;
+
+  /// No description provided for @currentMonthCharges.
+  ///
+  /// In en, this message translates to:
+  /// **'Current Month Charges'**
+  String get currentMonthCharges;
+
+  /// No description provided for @arrears.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrears'**
+  String get arrears;
+
+  /// No description provided for @payNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay Now'**
+  String get payNow;
+
+  /// No description provided for @allClear.
+  ///
+  /// In en, this message translates to:
+  /// **'All Clear'**
+  String get allClear;
+
+  /// No description provided for @noDues.
+  ///
+  /// In en, this message translates to:
+  /// **'No Dues'**
+  String get noDues;
+
+  /// No description provided for @latestBill.
+  ///
+  /// In en, this message translates to:
+  /// **'Latest Bill'**
+  String get latestBill;
+
+  /// No description provided for @viewBill.
+  ///
+  /// In en, this message translates to:
+  /// **'View Bill'**
+  String get viewBill;
+
+  /// No description provided for @dueDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Due Date'**
+  String get dueDate;
+
+  /// No description provided for @buildingNotices.
+  ///
+  /// In en, this message translates to:
+  /// **'Building Notices'**
+  String get buildingNotices;
+
+  /// No description provided for @noNotices.
+  ///
+  /// In en, this message translates to:
+  /// **'No Notices'**
+  String get noNotices;
+
+  /// No description provided for @recentActivity.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent Activity'**
+  String get recentActivity;
+
+  /// No description provided for @quickActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick Actions'**
+  String get quickActions;
+
+  /// No description provided for @selectFlat.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Flat'**
+  String get selectFlat;
+
+  /// No description provided for @switchFlat.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch Flat'**
+  String get switchFlat;
+
+  /// No description provided for @noFlatsAssigned.
+  ///
+  /// In en, this message translates to:
+  /// **'No flats assigned'**
+  String get noFlatsAssigned;
+
+  /// No description provided for @retry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get retry;
 }
 
 class _AppLocalizationsDelegate
