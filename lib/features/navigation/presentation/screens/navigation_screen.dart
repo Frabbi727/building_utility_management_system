@@ -5,6 +5,7 @@ import '../../../../core/localization/l10n_ext.dart';
 import '../../../../shared/services/flat_context_service.dart';
 import '../../../dashboard/presentation/screens/dashboard_screen.dart';
 import '../../../maintenance/presentation/screens/maintenance_screen.dart';
+import '../../../payments/presentation/screens/payments_screen.dart';
 import '../controllers/navigation_controller.dart';
 import '../widgets/flat_selector_bottom_sheet.dart';
 
@@ -87,10 +88,7 @@ class NavigationScreen extends GetView<NavigationController> {
               title: context.l10n.navBills,
               icon: Icons.receipt_long,
             ),
-            _PlaceholderTab(
-              title: context.l10n.navPayments,
-              icon: Icons.payment,
-            ),
+            const PaymentsScreen(),
             const MaintenanceScreen(),
           ],
         ),
