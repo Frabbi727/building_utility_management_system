@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../../../../core/localization/l10n_ext.dart';
 import '../../../../shared/services/flat_context_service.dart';
+import '../../../bills/presentation/screens/bills_screen.dart';
 import '../../../dashboard/presentation/screens/dashboard_screen.dart';
 import '../../../maintenance/presentation/screens/maintenance_screen.dart';
 import '../../../payments/presentation/screens/payments_screen.dart';
@@ -84,10 +85,7 @@ class NavigationScreen extends GetView<NavigationController> {
           index: controller.currentIndex.value,
           children: [
             const DashboardScreen(),
-            _PlaceholderTab(
-              title: context.l10n.navBills,
-              icon: Icons.receipt_long,
-            ),
+            const BillsScreen(),
             const PaymentsScreen(),
             const MaintenanceScreen(),
           ],
@@ -120,41 +118,6 @@ class NavigationScreen extends GetView<NavigationController> {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _PlaceholderTab extends StatelessWidget {
-  final String title;
-  final IconData icon;
-
-  const _PlaceholderTab({
-    required this.title,
-    required this.icon,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            icon,
-            size: 48.sp,
-            color: theme.colorScheme.primary.withValues(alpha: 0.5),
-          ),
-          SizedBox(height: 12.h),
-          Text(
-            title,
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ],
       ),
     );
   }

@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import '../../../bills/presentation/bindings/bills_binding.dart';
 import '../../../dashboard/presentation/bindings/dashboard_binding.dart';
 import '../../../maintenance/presentation/bindings/maintenance_binding.dart';
 import '../../../payments/presentation/bindings/payments_binding.dart';
@@ -9,7 +10,8 @@ class NavigationBinding extends Bindings {
   void dependencies() {
     Get.lazyPut<NavigationController>(() => NavigationController());
     DashboardBinding().dependencies();
-    MaintenanceBinding().dependencies();
+    BillsBinding().dependencies();
     PaymentsBinding().dependencies();
+    MaintenanceBinding().dependencies();
   }
 }
