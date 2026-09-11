@@ -26,15 +26,17 @@ class BillsScreen extends GetView<BillsController> {
           SizedBox(height: 12.h),
           SizedBox(
             height: 40.h,
-            child: Obx(
-              () => ListView.separated(
+            child: Obx(() {
+              final activeStatus = controller.selectedStatus.value;
+
+              return ListView.separated(
                 scrollDirection: Axis.horizontal,
                 padding: EdgeInsets.symmetric(horizontal: 16.w),
                 itemCount: filters.length,
                 separatorBuilder: (context, index) => SizedBox(width: 8.w),
                 itemBuilder: (context, index) {
                   final filter = filters[index];
-                  final isSelected = controller.selectedStatus.value == filter['key'];
+                  final isSelected = activeStatus == filter['key'];
 
                   return ChoiceChip(
                     label: Text(filter['label']!),
@@ -46,8 +48,8 @@ class BillsScreen extends GetView<BillsController> {
                     ),
                   );
                 },
-              ),
-            ),
+              );
+            }),
           ),
           SizedBox(height: 8.h),
           Expanded(

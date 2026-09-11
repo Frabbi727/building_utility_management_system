@@ -103,7 +103,7 @@ void main() {
                 'is_owner': true,
                 'is_tenant': false,
               },
-              'flats': [],
+              'flats': <dynamic>[],
             },
           },
         ),

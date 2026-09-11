@@ -3,7 +3,6 @@ import 'package:mocktail/mocktail.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:get/get.dart';
 import 'package:building_utility_management_system/features/payments/domain/entities/payment_entity.dart';
-import 'package:building_utility_management_system/features/payments/domain/entities/payment_submission_entity.dart';
 import 'package:building_utility_management_system/features/payments/domain/usecases/get_payment_submissions_usecase.dart';
 import 'package:building_utility_management_system/features/payments/domain/usecases/get_payments_usecase.dart';
 import 'package:building_utility_management_system/features/payments/domain/usecases/submit_payment_usecase.dart';

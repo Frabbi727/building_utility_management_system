@@ -17,12 +17,12 @@ RecentActivityModel _$RecentActivityModelFromJson(Map<String, dynamic> json) =>
     );
 
 Map<String, dynamic> _$RecentActivityModelToJson(
-        RecentActivityModel instance) =>
-    <String, dynamic>{
-      'id': instance.id,
-      'type': instance.type,
-      'title': instance.title,
-      'amount': instance.amount,
-      'date': instance.date,
-      'status': instance.status,
-    };
+  RecentActivityModel instance,
+) => <String, dynamic>{
+  'id': instance.id,
+  'type': instance.type,
+  'title': instance.title,
+  'amount': instance.amount,
+  'date': instance.date,
+  'status': instance.status,
+};
