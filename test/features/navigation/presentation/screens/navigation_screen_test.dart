@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:building_utility_management_system/core/localization/app_localizations.dart';
 import 'package:building_utility_management_system/core/storage/local_cache_service.dart';
 import 'package:building_utility_management_system/features/bills/domain/usecases/get_bill_details_usecase.dart';
@@ -220,5 +221,14 @@ void main() {
 
     expect(navigationController.currentIndex.value, 3);
     expect(find.byType(MaintenanceScreen), findsOneWidget);
+  });
+
+  testWidgets('navigating to another screen does not throw Hero tag conflict', (tester) async {
+    await tester.pumpWidget(buildTestWidget());
+    await tester.pumpAndSettle();
+
+    unawaited(Get.to<dynamic>(() => const Scaffold(body: Text('Dummy Page'))));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
   });
 }

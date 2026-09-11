@@ -17,6 +17,7 @@ class MaintenanceScreen extends GetView<MaintenanceController> {
 
     return Scaffold(
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'maintenance_create_fab',
         onPressed: () => CreateTicketBottomSheet.show(context),
         icon: const Icon(Icons.add),
         label: Text(context.l10n.createTicket),
