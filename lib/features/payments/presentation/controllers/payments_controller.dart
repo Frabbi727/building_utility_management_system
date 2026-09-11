@@ -130,9 +130,15 @@ class PaymentsController extends GetxController {
 
   Future<void> openReceiptUrl(String url) async {
     final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {
+    try {
+      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!launched) {
+        final fallback = await launchUrl(uri, mode: LaunchMode.platformDefault);
+        if (!fallback) {
+          Get.snackbar('Error', 'Could not open receipt PDF link');
+        }
+      }
+    } catch (_) {
       Get.snackbar('Error', 'Could not open receipt PDF link');
     }
   }

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../../../core/constants/api_endpoints.dart';
+import '../../../../app/flavors/app_flavor.dart';
 import '../../../../core/localization/l10n_ext.dart';
 import '../../../payments/presentation/widgets/submit_payment_bottom_sheet.dart';
 import '../../domain/entities/bill_entity.dart';
@@ -45,12 +45,18 @@ class _BillDetailsScreenState extends State<BillDetailsScreen> {
   }
 
   Future<void> _printBillPdf() async {
-    // Standard backend print route
-    final printUrl = '${ApiEndpoints.residentBills}/${_currentBill.id}/print';
-    final uri = Uri.parse(printUrl);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {
+    try {
+      final host = AppFlavor.baseUrl.replaceAll('/api/v1', '');
+      final printUrl = '$host/bills/${_currentBill.id}/print';
+      final uri = Uri.parse(printUrl);
+      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!launched) {
+        final fallback = await launchUrl(uri, mode: LaunchMode.platformDefault);
+        if (!fallback) {
+          Get.snackbar('Error', 'Could not open bill PDF link');
+        }
+      }
+    } catch (_) {
       Get.snackbar('Error', 'Could not open bill PDF link');
     }
   }

@@ -14,7 +14,7 @@ class PaymentsScreen extends GetView<PaymentsController> {
   Widget build(BuildContext context) {
     return Scaffold(
       floatingActionButton: FloatingActionButton.extended(
-        heroTag: 'payments_submit_fab',
+        heroTag: null,
         onPressed: () => SubmitPaymentBottomSheet.show(context),
         icon: const Icon(Icons.add),
         label: Text(context.l10n.submitPaymentProof),
