@@ -119,5 +119,7 @@
   "logoutConfirm": "আপনি কি নিশ্চিতভাবে লগআউট করতে চান?",
   "assignedFlats": "নির্ধারিত ফ্ল্যাটসমূহ",
   "roleOwner": "মালিক",
-  "roleTenant": "ভাড়াটিয়া"
+  "roleTenant": "ভাড়াটিয়া",
+  "settings": "সেটিংস",
+  "fieldRequired": "এই তথ্যটি পূরণ করা আবশ্যক"
 }

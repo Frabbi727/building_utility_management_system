@@ -3,6 +3,8 @@ import '../../features/auth/presentation/bindings/auth_binding.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/navigation/presentation/bindings/navigation_binding.dart';
 import '../../features/navigation/presentation/screens/navigation_screen.dart';
+import '../../features/profile/presentation/bindings/profile_binding.dart';
+import '../../features/profile/presentation/screens/profile_screen.dart';
 import 'auth_middleware.dart';
 import 'route_names.dart';
 
@@ -19,6 +21,12 @@ abstract final class AppPages {
       name: AppRoutes.home,
       page: () => const NavigationScreen(),
       binding: NavigationBinding(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: AppRoutes.profile,
+      page: () => const ProfileScreen(),
+      binding: ProfileBinding(),
       middlewares: [AuthMiddleware()],
     ),
   ];

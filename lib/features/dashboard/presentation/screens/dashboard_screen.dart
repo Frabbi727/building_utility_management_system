@@ -10,6 +10,7 @@ import '../widgets/latest_bill_card.dart';
 import '../widgets/notices_banner_widget.dart';
 import '../widgets/quick_actions_row.dart';
 import '../widgets/recent_activity_list.dart';
+import '../../../notices/presentation/widgets/notice_detail_bottom_sheet.dart';
 
 class DashboardScreen extends GetView<DashboardController> {
   const DashboardScreen({super.key});
@@ -76,7 +77,11 @@ class DashboardScreen extends GetView<DashboardController> {
                   ],
                   if (data.activeNotices.isNotEmpty) ...[
                     SizedBox(height: 16.h),
-                    NoticesBannerWidget(notices: data.activeNotices),
+                    NoticesBannerWidget(
+                      notices: data.activeNotices,
+                      onNoticeTap: (notice) =>
+                          NoticeDetailBottomSheet.show(context, notice),
+                    ),
                   ],
                   if (data.recentActivity.isNotEmpty) ...[
                     SizedBox(height: 16.h),

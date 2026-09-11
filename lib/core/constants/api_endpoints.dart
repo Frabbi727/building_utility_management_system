@@ -22,4 +22,5 @@ abstract final class ApiEndpoints {
   static String residentNoticeDetails(int id) => '/resident/notices/$id';
 
   static const changePassword = '/auth/change-password';
+  static const logout = '/auth/logout';
 }

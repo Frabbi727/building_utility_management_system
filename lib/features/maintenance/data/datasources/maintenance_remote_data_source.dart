@@ -57,7 +57,7 @@ class MaintenanceRemoteDataSourceImpl implements MaintenanceRemoteDataSource {
     } else if (data is List) {
       rawList = data;
     } else {
-      rawList = const [];
+      rawList = const <dynamic>[];
     }
 
     return (rawList as List)

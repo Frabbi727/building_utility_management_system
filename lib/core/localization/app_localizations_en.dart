@@ -367,4 +367,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get roleTenant => 'Tenant';
+
+  @override
+  String get settings => 'Settings';
+
+  @override
+  String get fieldRequired => 'This field is required';
 }

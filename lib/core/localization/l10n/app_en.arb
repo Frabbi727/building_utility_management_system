@@ -119,5 +119,7 @@
   "logoutConfirm": "Are you sure you want to log out?",
   "assignedFlats": "Assigned Flats",
   "roleOwner": "Owner",
-  "roleTenant": "Tenant"
+  "roleTenant": "Tenant",
+  "settings": "Settings",
+  "fieldRequired": "This field is required"
 }

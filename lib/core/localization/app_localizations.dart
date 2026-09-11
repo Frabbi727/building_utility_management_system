@@ -817,6 +817,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Tenant'**
   String get roleTenant;
+
+  /// No description provided for @settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settings;
+
+  /// No description provided for @fieldRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'This field is required'**
+  String get fieldRequired;
 }
 
 class _AppLocalizationsDelegate

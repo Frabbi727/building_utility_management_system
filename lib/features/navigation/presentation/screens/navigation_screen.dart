@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../../../../core/localization/l10n_ext.dart';
+import '../../../../core/routing/route_names.dart';
 import '../../../../shared/services/flat_context_service.dart';
 import '../../../bills/presentation/screens/bills_screen.dart';
 import '../../../dashboard/presentation/screens/dashboard_screen.dart';
@@ -79,6 +80,14 @@ class NavigationScreen extends GetView<NavigationController> {
                 );
               })
             : Text(context.l10n.homeTitle),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.person_outline),
+            tooltip: context.l10n.profileTitle,
+            onPressed: () => Get.toNamed<dynamic>(AppRoutes.profile),
+          ),
+          SizedBox(width: 8.w),
+        ],
       ),
       body: Obx(
         () => IndexedStack(

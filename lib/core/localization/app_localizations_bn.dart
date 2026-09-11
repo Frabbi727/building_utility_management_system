@@ -367,4 +367,10 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get roleTenant => 'ভাড়াটিয়া';
+
+  @override
+  String get settings => 'সেটিংস';
+
+  @override
+  String get fieldRequired => 'এই তথ্যটি পূরণ করা আবশ্যক';
 }
