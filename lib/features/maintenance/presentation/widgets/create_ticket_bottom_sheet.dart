@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../../../../core/localization/l10n_ext.dart';
+import '../../../../core/widgets/confirm_dialog.dart';
 import '../../domain/entities/maintenance_request_entity.dart';
 import '../controllers/maintenance_controller.dart';
 
@@ -49,7 +50,9 @@ class _CreateTicketBottomSheetState extends State<CreateTicketBottomSheet> {
         left: 20.w,
         right: 20.w,
         top: 20.h,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 24.h,
+        bottom: MediaQuery.of(context).viewInsets.bottom +
+            MediaQuery.of(context).padding.bottom +
+            24.h,
       ),
       child: Form(
         key: _formKey,
@@ -186,20 +189,39 @@ class _CreateTicketBottomSheetState extends State<CreateTicketBottomSheet> {
                         ? null
                         : () async {
                             if (_formKey.currentState?.validate() ?? false) {
-                              final success = await controller.submitRequest(
-                                title: _titleController.text.trim(),
-                                description: _descController.text.trim(),
-                                category: _selectedCategory.value,
-                                priority: _selectedPriority.value,
+                              final confirmed = await ConfirmDialog.show(
+                                context,
+                                title: context.l10n.createTicket,
+                                message:
+                                    'Are you sure you want to submit this maintenance request?',
+                                details: {
+                                  context.l10n.ticketCategory:
+                                      _selectedCategory.name.toUpperCase(),
+                                  context.l10n.ticketPriority:
+                                      _selectedPriority.name.toUpperCase(),
+                                  context.l10n.ticketTitle:
+                                      _titleController.text.trim(),
+                                },
+                                confirmText: context.l10n.submit,
+                                cancelText: context.l10n.cancel,
                               );
-                              if (success && context.mounted) {
-                                Navigator.pop(context);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(context.l10n.ticketSubmitted),
-                                    backgroundColor: Colors.green,
-                                  ),
+
+                              if (confirmed == true && context.mounted) {
+                                final success = await controller.submitRequest(
+                                  title: _titleController.text.trim(),
+                                  description: _descController.text.trim(),
+                                  category: _selectedCategory.value,
+                                  priority: _selectedPriority.value,
                                 );
+                                if (success && context.mounted) {
+                                  Navigator.pop(context);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(context.l10n.ticketSubmitted),
+                                      backgroundColor: Colors.green,
+                                    ),
+                                  );
+                                }
                               }
                             }
                           },

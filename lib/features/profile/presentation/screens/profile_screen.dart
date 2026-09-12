@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../../../../core/localization/l10n_ext.dart';
+import '../../../../core/widgets/confirm_dialog.dart';
 import '../controllers/profile_controller.dart';
 import '../widgets/change_password_dialog.dart';
 
@@ -235,31 +236,18 @@ class ProfileScreen extends GetView<ProfileController> {
                     ),
                     icon: const Icon(Icons.logout),
                     label: Text(context.l10n.logout),
-                    onPressed: () {
-                      showDialog<void>(
-                        context: context,
-                        builder: (ctx) => AlertDialog(
-                          title: Text(context.l10n.logout),
-                          content: Text(context.l10n.logoutConfirm),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.of(ctx).pop(),
-                              child: Text(context.l10n.cancel),
-                            ),
-                            ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: theme.colorScheme.error,
-                                foregroundColor: theme.colorScheme.onError,
-                              ),
-                              onPressed: () {
-                                Navigator.of(ctx).pop();
-                                controller.logout();
-                              },
-                              child: Text(context.l10n.logout),
-                            ),
-                          ],
-                        ),
+                    onPressed: () async {
+                      final confirmed = await ConfirmDialog.show(
+                        context,
+                        title: context.l10n.logout,
+                        message: context.l10n.logoutConfirm,
+                        confirmText: context.l10n.logout,
+                        cancelText: context.l10n.cancel,
+                        isDanger: true,
                       );
+                      if (confirmed == true) {
+                        await controller.logout();
+                      }
                     },
                   ),
                 ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../../../../core/localization/l10n_ext.dart';
+import '../../../../core/widgets/confirm_dialog.dart';
 import '../controllers/payments_controller.dart';
 import 'slip_image_picker_field.dart';
 
@@ -116,7 +117,9 @@ class _SubmitPaymentBottomSheetState extends State<SubmitPaymentBottomSheet> {
         left: 20.w,
         right: 20.w,
         top: 20.h,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 24.h,
+        bottom: MediaQuery.of(context).viewInsets.bottom +
+            MediaQuery.of(context).padding.bottom +
+            24.h,
       ),
       child: Form(
         key: _formKey,
@@ -290,24 +293,42 @@ class _SubmitPaymentBottomSheetState extends State<SubmitPaymentBottomSheet> {
                         ? null
                         : () async {
                             if (_formKey.currentState?.validate() ?? false) {
-                              final formattedDate =
-                                  '${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}';
-                              final success = await controller.submitPaymentProof(
-                                amount: _amountController.text.trim(),
-                                method: _selectedMethod,
-                                referenceNumber: _refController.text.trim(),
-                                paymentDate: formattedDate,
-                                notes: _notesController.text.trim(),
-                                slipFilePath: _slipPath,
+                              final confirmed = await ConfirmDialog.show(
+                                context,
+                                title: context.l10n.submitPaymentProof,
+                                message:
+                                    'Are you sure you want to submit this payment proof for verification?',
+                                details: {
+                                  context.l10n.amount: '৳ ${_amountController.text.trim()}',
+                                  context.l10n.paymentMethod:
+                                      _getMethodLabel(context, _selectedMethod),
+                                  context.l10n.referenceNumber:
+                                      _refController.text.trim(),
+                                },
+                                confirmText: context.l10n.submit,
+                                cancelText: context.l10n.cancel,
                               );
-                              if (success && context.mounted) {
-                                Navigator.pop(context);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(context.l10n.paymentSubmitted),
-                                    backgroundColor: Colors.green,
-                                  ),
+
+                              if (confirmed == true && context.mounted) {
+                                final formattedDate =
+                                    '${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}';
+                                final success = await controller.submitPaymentProof(
+                                  amount: _amountController.text.trim(),
+                                  method: _selectedMethod,
+                                  referenceNumber: _refController.text.trim(),
+                                  paymentDate: formattedDate,
+                                  notes: _notesController.text.trim(),
+                                  slipFilePath: _slipPath,
                                 );
+                                if (success && context.mounted) {
+                                  Navigator.pop(context);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(context.l10n.paymentSubmitted),
+                                      backgroundColor: Colors.green,
+                                    ),
+                                  );
+                                }
                               }
                             }
                           },

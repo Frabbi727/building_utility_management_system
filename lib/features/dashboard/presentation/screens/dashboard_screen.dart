@@ -11,6 +11,7 @@ import '../widgets/notices_banner_widget.dart';
 import '../widgets/quick_actions_row.dart';
 import '../widgets/recent_activity_list.dart';
 import '../../../notices/presentation/widgets/notice_detail_bottom_sheet.dart';
+import '../../../payments/presentation/widgets/submit_payment_bottom_sheet.dart';
 
 class DashboardScreen extends GetView<DashboardController> {
   const DashboardScreen({super.key});
@@ -68,7 +69,13 @@ class DashboardScreen extends GetView<DashboardController> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  BalanceHeroCard(balances: data.balances),
+                  BalanceHeroCard(
+                    balances: data.balances,
+                    onPayNow: () => SubmitPaymentBottomSheet.show(
+                      context,
+                      initialAmount: data.balances.totalDue.replaceAll(',', ''),
+                    ),
+                  ),
                   SizedBox(height: 16.h),
                   const QuickActionsRow(),
                   if (data.latestBill != null) ...[

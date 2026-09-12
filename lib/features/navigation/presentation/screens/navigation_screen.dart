@@ -100,32 +100,35 @@ class NavigationScreen extends GetView<NavigationController> {
           ],
         ),
       ),
-      bottomNavigationBar: Obx(
-        () => NavigationBar(
-          selectedIndex: controller.currentIndex.value,
-          onDestinationSelected: controller.changeTab,
-          destinations: [
-            NavigationDestination(
-              icon: const Icon(Icons.home_outlined),
-              selectedIcon: const Icon(Icons.home),
-              label: context.l10n.navHome,
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.receipt_long_outlined),
-              selectedIcon: const Icon(Icons.receipt_long),
-              label: context.l10n.navBills,
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.payment_outlined),
-              selectedIcon: const Icon(Icons.payment),
-              label: context.l10n.navPayments,
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.build_outlined),
-              selectedIcon: const Icon(Icons.build),
-              label: context.l10n.navMaintenance,
-            ),
-          ],
+      bottomNavigationBar: SafeArea(
+        bottom: true,
+        child: Obx(
+          () => NavigationBar(
+            selectedIndex: controller.currentIndex.value,
+            onDestinationSelected: controller.changeTab,
+            destinations: [
+              NavigationDestination(
+                icon: const Icon(Icons.home_outlined),
+                selectedIcon: const Icon(Icons.home),
+                label: context.l10n.navHome,
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.receipt_long_outlined),
+                selectedIcon: const Icon(Icons.receipt_long),
+                label: context.l10n.navBills,
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.payment_outlined),
+                selectedIcon: const Icon(Icons.payment),
+                label: context.l10n.navPayments,
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.build_outlined),
+                selectedIcon: const Icon(Icons.build),
+                label: context.l10n.navMaintenance,
+              ),
+            ],
+          ),
         ),
       ),
     );

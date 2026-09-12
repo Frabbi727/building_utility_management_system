@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../../../../core/localization/l10n_ext.dart';
+import '../../../../core/widgets/confirm_dialog.dart';
 import '../controllers/profile_controller.dart';
 
 class ChangePasswordDialog extends StatefulWidget {
@@ -159,6 +160,14 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
                 ? null
                 : () async {
                     if (!_formKey.currentState!.validate()) return;
+                    final confirmed = await ConfirmDialog.show(
+                      context,
+                      title: context.l10n.changePassword,
+                      message: 'Are you sure you want to change your password?',
+                      confirmText: context.l10n.save,
+                      cancelText: context.l10n.cancel,
+                    );
+                    if (confirmed != true) return;
                     final success = await controller.changePassword(
                       currentPassword: _currentController.text.trim(),
                       newPassword: _newController.text.trim(),

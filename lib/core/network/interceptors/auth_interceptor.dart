@@ -1,4 +1,7 @@
+import 'dart:io' show Platform;
+import 'dart:math';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../constants/api_endpoints.dart';
 import '../../storage/secure_storage_service.dart';
 
@@ -26,7 +29,34 @@ class AuthInterceptor extends QueuedInterceptorsWrapper {
     if (token != null && token.isNotEmpty) {
       options.headers['Authorization'] = 'Bearer $token';
     }
+
+    // Propagate audit correlation headers
+    options.headers['X-Request-Id'] ??= _generateRequestId();
+    options.headers['X-Client-Platform'] ??= _getClientPlatform();
+    options.headers['X-App-Version'] ??= '1.0.0';
+
     return handler.next(options);
+  }
+
+  static String _generateRequestId() {
+    final random = Random();
+    final part1 = DateTime.now().microsecondsSinceEpoch.toRadixString(16);
+    final part2 = random.nextInt(0xFFFFFF).toRadixString(16).padLeft(6, '0');
+    return 'req-$part1-$part2';
+  }
+
+  static String _getClientPlatform() {
+    if (kIsWeb) return 'flutter_web';
+    try {
+      if (Platform.isAndroid) return 'flutter_android';
+      if (Platform.isIOS) return 'flutter_ios';
+      if (Platform.isMacOS) return 'flutter_macos';
+      if (Platform.isWindows) return 'flutter_windows';
+      if (Platform.isLinux) return 'flutter_linux';
+    } catch (_) {
+      return 'flutter';
+    }
+    return 'flutter';
   }
 
   @override

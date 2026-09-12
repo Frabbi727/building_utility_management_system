@@ -65,6 +65,19 @@ void main() {
       expect(options.headers.containsKey('Authorization'), isFalse);
       verify(() => requestHandler.next(options)).called(1);
     });
+
+    test('propagates audit correlation headers (X-Request-Id, X-Client-Platform, X-App-Version)', () async {
+      when(() => mockStorage.getAccessToken()).thenAnswer((_) async => null);
+      final options = RequestOptions(path: '/api/v1/bills');
+
+      await interceptor.onRequest(options, requestHandler);
+
+      expect(options.headers['X-Request-Id'], isNotNull);
+      expect((options.headers['X-Request-Id'] as String).startsWith('req-'), isTrue);
+      expect(options.headers['X-Client-Platform'], isNotNull);
+      expect(options.headers['X-App-Version'], '1.0.0');
+      verify(() => requestHandler.next(options)).called(1);
+    });
   });
 
   group('AuthInterceptor onError', () {

@@ -101,7 +101,7 @@ class MaintenanceScreen extends GetView<MaintenanceController> {
                 onRefresh: controller.refreshRequests,
                 child: ListView.builder(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                  padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 88.h),
                   itemCount: requests.length,
                   itemBuilder: (context, index) {
                     return MaintenanceCard(request: requests[index]);
