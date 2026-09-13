@@ -23,4 +23,12 @@ abstract final class ApiEndpoints {
 
   static const changePassword = '/auth/change-password';
   static const logout = '/auth/logout';
+
+  // Device & Notification Endpoints
+  static const registerDevice = '/devices/register';
+  static String deleteDevice(String deviceId) => '/devices/$deviceId';
+  static const notifications = '/notifications';
+  static const unreadNotificationsCount = '/notifications/unread-count';
+  static String markNotificationRead(int id) => '/notifications/$id/read';
+  static const markAllNotificationsRead = '/notifications/read-all';
 }

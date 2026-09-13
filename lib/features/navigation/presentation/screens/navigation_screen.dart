@@ -82,6 +82,11 @@ class NavigationScreen extends GetView<NavigationController> {
             : Text(context.l10n.homeTitle),
         actions: [
           IconButton(
+            icon: const Icon(Icons.notifications_outlined),
+            tooltip: 'Notifications',
+            onPressed: () => Get.toNamed<dynamic>(AppRoutes.notifications),
+          ),
+          IconButton(
             icon: const Icon(Icons.person_outline),
             tooltip: context.l10n.profileTitle,
             onPressed: () => Get.toNamed<dynamic>(AppRoutes.profile),

@@ -5,6 +5,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import '../core/network/dio_client.dart';
 import '../core/network/network_info.dart';
 import '../core/routing/route_names.dart';
+import '../core/services/firebase_notification_service.dart';
 import '../core/storage/local_cache_service.dart';
 import '../core/storage/secure_storage_service.dart';
 import '../shared/services/flat_context_service.dart';
@@ -44,6 +45,16 @@ class InitialBinding extends Bindings {
         permanent: true,
       );
     }
+
+    if (!Get.isRegistered<FirebaseNotificationService>()) {
+      Get.put<FirebaseNotificationService>(
+        FirebaseNotificationService(
+          dioClient: Get.find<DioClient>(),
+          storageService: secureStorage,
+        ),
+        permanent: true,
+      );
+    }
   }
 }
 
@@ -58,6 +69,14 @@ Future<void> bootstrap() async {
   await localCache.init();
 
   Get.put<FlatContextService>(FlatContextService(cacheService: localCache), permanent: true);
+
+  final notificationService = Get.put<FirebaseNotificationService>(
+    FirebaseNotificationService(
+      storageService: secureStorage,
+    ),
+    permanent: true,
+  );
+  await notificationService.init();
 
   runApp(const MainApp());
 }

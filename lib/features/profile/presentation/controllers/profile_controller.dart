@@ -5,6 +5,7 @@ import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/constants/storage_keys.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/routing/route_names.dart';
+import '../../../../core/services/firebase_notification_service.dart';
 import '../../../../core/storage/local_cache_service.dart';
 import '../../../../core/storage/secure_storage_service.dart';
 import '../../../../shared/services/flat_context_service.dart';
@@ -122,6 +123,9 @@ class ProfileController extends GetxController {
   Future<void> logout() async {
     isLoggingOut.value = true;
     try {
+      if (Get.isRegistered<FirebaseNotificationService>()) {
+        await Get.find<FirebaseNotificationService>().unregisterDevice();
+      }
       await dioClient.dio.post<dynamic>(ApiEndpoints.logout);
     } catch (_) {}
 

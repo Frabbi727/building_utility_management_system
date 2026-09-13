@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "770725387248",
+    "project_id": "building-utility-system",
+    "storage_bucket": "building-utility-system.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:770725387248:android:06a6d02908d303148fdb35",
+        "android_client_info": {
+          "package_name": "com.example.building_utility_management_system"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBwNPxEuBcJOwhN4Rtdr9RqjhpLSdDxgbQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

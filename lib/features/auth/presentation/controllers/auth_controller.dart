@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/base/view_state.dart';
 import '../../../../core/routing/route_names.dart';
+import '../../../../core/services/firebase_notification_service.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/usecases/login_usecase.dart';
 
@@ -37,6 +38,9 @@ class AuthController extends GetxController {
       (failure) => state.value = ErrorState(failure.message),
       (user) {
         state.value = SuccessState<UserEntity>(user);
+        if (Get.isRegistered<FirebaseNotificationService>()) {
+          Get.find<FirebaseNotificationService>().syncDeviceRegistration();
+        }
         Get.offAllNamed<dynamic>(AppRoutes.home);
       },
     );

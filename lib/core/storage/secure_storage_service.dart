@@ -10,6 +10,7 @@ class SecureStorageService {
 
   bool get hasToken => _cachedAccessToken != null && _cachedAccessToken!.isNotEmpty;
   String? get cachedAccessToken => _cachedAccessToken;
+  FlutterSecureStorage get storage => _storage;
 
   Future<void> init() async {
     _cachedAccessToken = await _storage.read(key: StorageKeys.authToken);

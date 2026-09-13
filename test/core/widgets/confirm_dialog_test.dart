@@ -41,8 +41,6 @@ void main() {
 
   group('ConfirmDialog', () {
     testWidgets('renders title, message, and details table', (tester) async {
-      bool? result;
-
       await tester.pumpWidget(
         buildTestWidget(
           title: 'Confirm Payment',
@@ -51,7 +49,7 @@ void main() {
             'Amount': '৳ 5,000',
             'Method': 'bKash',
           },
-          onResult: (res) => result = res,
+          onResult: (_) {},
         ),
       );
       await tester.pumpAndSettle();
