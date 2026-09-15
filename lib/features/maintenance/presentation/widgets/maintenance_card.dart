@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
 import '../../../../core/localization/l10n_ext.dart';
+import '../../../dashboard/presentation/controllers/dashboard_controller.dart';
 import '../../domain/entities/maintenance_request_entity.dart';
+import '../controllers/maintenance_controller.dart';
 import '../screens/maintenance_details_screen.dart';
 
 class MaintenanceCard extends StatelessWidget {
@@ -98,13 +101,19 @@ class MaintenanceCard extends StatelessWidget {
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(14.r),
-        onTap: () {
-          Navigator.push(
+        onTap: () async {
+          await Navigator.push(
             context,
             MaterialPageRoute<void>(
               builder: (_) => MaintenanceDetailsScreen(request: request),
             ),
           );
+          if (Get.isRegistered<MaintenanceController>()) {
+            Get.find<MaintenanceController>().refreshRequests();
+          }
+          if (Get.isRegistered<DashboardController>()) {
+            Get.find<DashboardController>().refreshDashboard();
+          }
         },
         child: Padding(
           padding: EdgeInsets.all(14.r),

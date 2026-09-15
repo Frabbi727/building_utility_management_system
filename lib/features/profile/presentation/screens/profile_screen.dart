@@ -6,8 +6,23 @@ import '../../../../core/widgets/confirm_dialog.dart';
 import '../controllers/profile_controller.dart';
 import '../widgets/change_password_dialog.dart';
 
-class ProfileScreen extends GetView<ProfileController> {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  final ProfileController controller = Get.find<ProfileController>();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      controller.fetchProfile();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +43,7 @@ class ProfileScreen extends GetView<ProfileController> {
           onRefresh: controller.fetchProfile,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+            padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 32.h),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

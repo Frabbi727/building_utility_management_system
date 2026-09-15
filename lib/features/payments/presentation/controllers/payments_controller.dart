@@ -70,8 +70,8 @@ class PaymentsController extends GetxController {
 
   void onTabVisible() {
     final currentFlat = flatService.selectedFlat.value;
-    if (currentFlat != null && _lastLoadedFlatId != currentFlat.id) {
-      loadData(flatId: currentFlat.id);
+    if (currentFlat != null) {
+      loadData(flatId: currentFlat.id, isRefresh: true);
     }
   }
 
@@ -81,6 +81,14 @@ class PaymentsController extends GetxController {
 
   void changeTab(int index) {
     selectedTabIndex.value = index;
+    final currentFlat = flatService.selectedFlat.value;
+    if (currentFlat != null) {
+      if (index == 0) {
+        loadPayments(flatId: currentFlat.id, isRefresh: true);
+      } else {
+        loadSubmissions(flatId: currentFlat.id, isRefresh: true);
+      }
+    }
   }
 
   Future<void> loadData({required int flatId, bool isRefresh = false}) async {
@@ -177,7 +185,7 @@ class PaymentsController extends GetxController {
           Get.find<DashboardController>().refreshDashboard();
         }
         if (Get.isRegistered<BillsController>()) {
-          Get.find<BillsController>().invalidateCache();
+          Get.find<BillsController>().refreshBills();
         }
 
         return true;

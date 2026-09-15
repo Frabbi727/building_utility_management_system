@@ -88,8 +88,13 @@ class NavigationScreen extends GetView<NavigationController> {
                 return IconButton(
                   icon: const Icon(Icons.notifications_outlined),
                   tooltip: 'Notifications',
-                  onPressed: () =>
-                      Get.toNamed<dynamic>(AppRoutes.notifications),
+                  onPressed: () async {
+                    await Get.toNamed<dynamic>(AppRoutes.notifications);
+                    controller.refreshCurrentTab();
+                    if (Get.isRegistered<NotificationController>()) {
+                      Get.find<NotificationController>().fetchUnreadCount();
+                    }
+                  },
                 );
               }
               final notifController = Get.find<NotificationController>();
@@ -102,8 +107,13 @@ class NavigationScreen extends GetView<NavigationController> {
                     child: const Icon(Icons.notifications_outlined),
                   ),
                   tooltip: 'Notifications',
-                  onPressed: () =>
-                      Get.toNamed<dynamic>(AppRoutes.notifications),
+                  onPressed: () async {
+                    await Get.toNamed<dynamic>(AppRoutes.notifications);
+                    controller.refreshCurrentTab();
+                    if (Get.isRegistered<NotificationController>()) {
+                      Get.find<NotificationController>().fetchUnreadCount();
+                    }
+                  },
                 );
               });
             },
@@ -111,7 +121,10 @@ class NavigationScreen extends GetView<NavigationController> {
           IconButton(
             icon: const Icon(Icons.person_outline),
             tooltip: context.l10n.profileTitle,
-            onPressed: () => Get.toNamed<dynamic>(AppRoutes.profile),
+            onPressed: () async {
+              await Get.toNamed<dynamic>(AppRoutes.profile);
+              controller.refreshCurrentTab();
+            },
           ),
           SizedBox(width: 8.w),
         ],

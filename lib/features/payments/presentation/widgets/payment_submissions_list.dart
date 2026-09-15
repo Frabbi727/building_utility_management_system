@@ -80,7 +80,7 @@ class PaymentSubmissionsList extends GetView<PaymentsController> {
         onRefresh: controller.refreshAll,
         child: ListView.builder(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 88.h),
+          padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 96.h),
           itemCount: submissions.length,
           itemBuilder: (context, index) {
             final item = submissions[index];

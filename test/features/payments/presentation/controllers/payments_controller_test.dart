@@ -39,6 +39,17 @@ void main() {
     when(() => mockFlatService.selectedFlat)
         .thenReturn(Rx<FlatEntity?>(tFlat));
 
+    when(() => mockGetPayments.call(
+          flatId: any(named: 'flatId'),
+          page: any(named: 'page'),
+        )).thenAnswer((_) async => const Right([]));
+
+    when(() => mockGetSubmissions.call(
+          flatId: any(named: 'flatId'),
+          status: any(named: 'status'),
+          page: any(named: 'page'),
+        )).thenAnswer((_) async => const Right([]));
+
     controller = PaymentsController(
       getPaymentsUseCase: mockGetPayments,
       getSubmissionsUseCase: mockGetSubmissions,

@@ -10,8 +10,24 @@ import '../../../../core/widgets/shimmer_loading.dart';
 import '../../domain/entities/notification_entity.dart';
 import '../controllers/notification_controller.dart';
 
-class NotificationsScreen extends GetView<NotificationController> {
+class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
+
+  @override
+  State<NotificationsScreen> createState() => _NotificationsScreenState();
+}
+
+class _NotificationsScreenState extends State<NotificationsScreen> {
+  final NotificationController controller = Get.find<NotificationController>();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      controller.fetchUnreadCount();
+      controller.fetchNotifications(isRefresh: true);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -92,7 +108,7 @@ class NotificationsScreen extends GetView<NotificationController> {
                   await controller.fetchNotifications(isRefresh: true);
                 },
                 child: ListView.separated(
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                  padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 24.h),
                   itemCount: list.length,
                   separatorBuilder: (context, index) => SizedBox(height: 8.h),
                   itemBuilder: (context, index) {

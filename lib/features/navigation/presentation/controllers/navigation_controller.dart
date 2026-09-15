@@ -14,6 +14,10 @@ class NavigationController extends GetxController {
     }
   }
 
+  void refreshCurrentTab() {
+    _notifyTabActivated(currentIndex.value);
+  }
+
   void _notifyTabActivated(int index) {
     switch (index) {
       case 0:

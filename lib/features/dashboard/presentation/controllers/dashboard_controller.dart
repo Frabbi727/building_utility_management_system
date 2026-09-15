@@ -53,8 +53,8 @@ class DashboardController extends GetxController {
 
   void onTabVisible() {
     final currentFlat = flatService.selectedFlat.value;
-    if (currentFlat != null && _lastLoadedFlatId != currentFlat.id) {
-      loadDashboard(flatId: currentFlat.id);
+    if (currentFlat != null) {
+      loadDashboard(flatId: currentFlat.id, isRefresh: true);
     }
   }
 

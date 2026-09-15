@@ -59,8 +59,12 @@ class BillsController extends GetxController {
 
   void onTabVisible() {
     final currentFlat = flatService.selectedFlat.value;
-    if (currentFlat != null && _lastLoadedFlatId != currentFlat.id) {
-      loadBills(flatId: currentFlat.id, status: selectedStatus.value);
+    if (currentFlat != null) {
+      loadBills(
+        flatId: currentFlat.id,
+        status: selectedStatus.value,
+        isRefresh: true,
+      );
     }
   }
 

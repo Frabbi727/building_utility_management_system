@@ -95,7 +95,7 @@ class BillsScreen extends GetView<BillsController> {
                 onRefresh: controller.refreshBills,
                 child: ListView.builder(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                  padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 24.h),
                   itemCount: bills.length,
                   itemBuilder: (context, index) {
                     return BillCard(bill: bills[index]);

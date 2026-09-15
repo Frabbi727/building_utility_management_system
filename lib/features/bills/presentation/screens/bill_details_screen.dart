@@ -81,12 +81,15 @@ class _BillDetailsScreenState extends State<BillDetailsScreen> {
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
                 child: FilledButton.icon(
-                  onPressed: () {
-                    SubmitPaymentBottomSheet.show(
+                  onPressed: () async {
+                    await SubmitPaymentBottomSheet.show(
                       context,
                       initialAmount: _currentBill.totalAmount,
                       initialReference: _currentBill.billNo,
                     );
+                    if (mounted) {
+                      _fetchDetails();
+                    }
                   },
                   icon: const Icon(Icons.payment),
                   label: Text(context.l10n.payNow),
@@ -97,7 +100,7 @@ class _BillDetailsScreenState extends State<BillDetailsScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-              padding: EdgeInsets.all(16.r),
+              padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 32.h),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

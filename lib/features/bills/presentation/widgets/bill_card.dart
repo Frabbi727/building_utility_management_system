@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
 import '../../../../core/localization/l10n_ext.dart';
+import '../../../dashboard/presentation/controllers/dashboard_controller.dart';
 import '../../../payments/presentation/widgets/submit_payment_bottom_sheet.dart';
 import '../../domain/entities/bill_entity.dart';
+import '../controllers/bills_controller.dart';
 import '../screens/bill_details_screen.dart';
 import 'bill_status_chip.dart';
 
@@ -26,13 +29,19 @@ class BillCard extends StatelessWidget {
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(14.r),
-        onTap: () {
-          Navigator.push(
+        onTap: () async {
+          await Navigator.push(
             context,
             MaterialPageRoute<void>(
               builder: (_) => BillDetailsScreen(bill: bill),
             ),
           );
+          if (Get.isRegistered<BillsController>()) {
+            Get.find<BillsController>().refreshBills();
+          }
+          if (Get.isRegistered<DashboardController>()) {
+            Get.find<DashboardController>().refreshDashboard();
+          }
         },
         child: Padding(
           padding: EdgeInsets.all(14.r),

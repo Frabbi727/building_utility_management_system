@@ -34,7 +34,7 @@ class MaintenanceDetailsScreen extends StatelessWidget {
         title: Text(context.l10n.details),
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(16.r),
+        padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 32.h),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

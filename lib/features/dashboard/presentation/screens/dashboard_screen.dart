@@ -12,6 +12,7 @@ import '../widgets/latest_bill_card.dart';
 import '../widgets/notices_banner_widget.dart';
 import '../widgets/quick_actions_row.dart';
 import '../widgets/recent_activity_list.dart';
+import '../../../navigation/presentation/controllers/navigation_controller.dart';
 import '../../../notices/presentation/widgets/notice_detail_bottom_sheet.dart';
 import '../../../payments/presentation/widgets/submit_payment_bottom_sheet.dart';
 
@@ -46,7 +47,7 @@ class DashboardScreen extends GetView<DashboardController> {
             onRefresh: controller.refreshDashboard,
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+              padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 24.h),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -61,7 +62,14 @@ class DashboardScreen extends GetView<DashboardController> {
                   const QuickActionsRow(),
                   if (data.latestBill != null) ...[
                     SizedBox(height: 16.h),
-                    LatestBillCard(bill: data.latestBill!),
+                    LatestBillCard(
+                      bill: data.latestBill!,
+                      onViewBill: () {
+                        if (Get.isRegistered<NavigationController>()) {
+                          Get.find<NavigationController>().changeTab(1);
+                        }
+                      },
+                    ),
                   ],
                   if (data.activeNotices.isNotEmpty) ...[
                     SizedBox(height: 16.h),
@@ -73,7 +81,22 @@ class DashboardScreen extends GetView<DashboardController> {
                   ],
                   if (data.recentActivity.isNotEmpty) ...[
                     SizedBox(height: 16.h),
-                    RecentActivityList(activities: data.recentActivity),
+                    RecentActivityList(
+                      activities: data.recentActivity,
+                      onActivityTap: (activity) {
+                        if (Get.isRegistered<NavigationController>()) {
+                          final nav = Get.find<NavigationController>();
+                          final type = activity.type.toLowerCase();
+                          if (type == 'payment') {
+                            nav.changeTab(2);
+                          } else if (type == 'maintenance' || type == 'ticket') {
+                            nav.changeTab(3);
+                          } else {
+                            nav.changeTab(1);
+                          }
+                        }
+                      },
+                    ),
                   ],
                   SizedBox(height: 24.h),
                 ],
