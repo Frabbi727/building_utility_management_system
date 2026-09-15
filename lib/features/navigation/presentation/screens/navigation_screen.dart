@@ -7,6 +7,7 @@ import '../../../../shared/services/flat_context_service.dart';
 import '../../../bills/presentation/screens/bills_screen.dart';
 import '../../../dashboard/presentation/screens/dashboard_screen.dart';
 import '../../../maintenance/presentation/screens/maintenance_screen.dart';
+import '../../../notifications/presentation/controllers/notification_controller.dart';
 import '../../../payments/presentation/screens/payments_screen.dart';
 import '../controllers/navigation_controller.dart';
 import '../widgets/flat_selector_bottom_sheet.dart';
@@ -81,10 +82,31 @@ class NavigationScreen extends GetView<NavigationController> {
               })
             : Text(context.l10n.homeTitle),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            tooltip: 'Notifications',
-            onPressed: () => Get.toNamed<dynamic>(AppRoutes.notifications),
+          Builder(
+            builder: (context) {
+              if (!Get.isRegistered<NotificationController>()) {
+                return IconButton(
+                  icon: const Icon(Icons.notifications_outlined),
+                  tooltip: 'Notifications',
+                  onPressed: () =>
+                      Get.toNamed<dynamic>(AppRoutes.notifications),
+                );
+              }
+              final notifController = Get.find<NotificationController>();
+              return Obx(() {
+                final count = notifController.unreadCount.value;
+                return IconButton(
+                  icon: Badge(
+                    isLabelVisible: count > 0,
+                    label: Text('$count', style: TextStyle(fontSize: 10.sp)),
+                    child: const Icon(Icons.notifications_outlined),
+                  ),
+                  tooltip: 'Notifications',
+                  onPressed: () =>
+                      Get.toNamed<dynamic>(AppRoutes.notifications),
+                );
+              });
+            },
           ),
           IconButton(
             icon: const Icon(Icons.person_outline),

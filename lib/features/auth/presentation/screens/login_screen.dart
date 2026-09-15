@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -22,7 +23,7 @@ class LoginScreen extends GetView<AuthController> {
               padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
               child: ConstrainedBox(
                 constraints: BoxConstraints(
-                  minHeight: constraints.maxHeight - 32.h,
+                  minHeight: math.max(0.0, constraints.maxHeight - 32.h),
                 ),
                 child: Obx(() {
                   final currentState = controller.state.value;

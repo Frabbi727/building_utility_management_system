@@ -3,6 +3,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../../../../core/base/view_state.dart';
 import '../../../../core/localization/l10n_ext.dart';
+import '../../../../core/widgets/empty_state_widget.dart';
+import '../../../../core/widgets/shimmer_loading.dart';
 import '../controllers/payments_controller.dart';
 
 class VerifiedPaymentsList extends GetView<PaymentsController> {
@@ -15,50 +17,36 @@ class VerifiedPaymentsList extends GetView<PaymentsController> {
     return Obx(() {
       final state = controller.paymentsState.value;
 
-      if (state is LoadingState) {
-        return const Center(child: CircularProgressIndicator());
+      if (state is LoadingState && controller.payments.isEmpty) {
+        return const CardListSkeleton(itemCount: 4, cardHeight: 120);
       }
 
-      if (state is ErrorState) {
-        return Center(
-          child: Padding(
-            padding: EdgeInsets.all(24.r),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.error_outline, size: 48.sp, color: theme.colorScheme.error),
-                SizedBox(height: 12.h),
-                Text(state.message, textAlign: TextAlign.center),
-                SizedBox(height: 16.h),
-                ElevatedButton.icon(
-                  onPressed: controller.refreshAll,
-                  icon: const Icon(Icons.refresh),
-                  label: Text(context.l10n.retry),
-                ),
-              ],
-            ),
-          ),
+      if (state is ErrorState && controller.payments.isEmpty) {
+        return EmptyStateWidget(
+          icon: Icons.error_outline,
+          title: 'Unable to load payments',
+          message: state.message,
+          actionLabel: context.l10n.retry,
+          onAction: controller.refreshAll,
+          iconColor: Theme.of(context).colorScheme.error,
         );
       }
 
       final payments = controller.payments;
       if (payments.isEmpty) {
-        return Center(
-          child: Padding(
-            padding: EdgeInsets.all(24.r),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.receipt_long_outlined,
-                    size: 56.sp, color: theme.colorScheme.primary.withValues(alpha: 0.4)),
-                SizedBox(height: 12.h),
-                Text(
-                  context.l10n.noPaymentsFound,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
+        return RefreshIndicator(
+          onRefresh: controller.refreshAll,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: SizedBox(
+              height: 400.h,
+              child: EmptyStateWidget(
+                icon: Icons.receipt_long_outlined,
+                title: context.l10n.noPaymentsFound,
+                message: 'No verified payments recorded for this flat yet.',
+                actionLabel: context.l10n.retry,
+                onAction: controller.refreshAll,
+              ),
             ),
           ),
         );

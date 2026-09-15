@@ -3,6 +3,10 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/base/view_state.dart';
+import '../../../../core/localization/l10n_ext.dart';
+import '../../../../core/widgets/confirm_dialog.dart';
+import '../../../../core/widgets/empty_state_widget.dart';
+import '../../../../core/widgets/shimmer_loading.dart';
 import '../../domain/entities/notification_entity.dart';
 import '../controllers/notification_controller.dart';
 
@@ -11,8 +15,6 @@ class NotificationsScreen extends GetView<NotificationController> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Notifications'),
@@ -22,8 +24,19 @@ class NotificationsScreen extends GetView<NotificationController> {
             if (unread == 0) return const SizedBox.shrink();
 
             return TextButton(
-              onPressed: controller.markAllAsRead,
-              child: const Text('Mark all read'),
+              onPressed: () async {
+                final confirmed = await ConfirmDialog.show(
+                  context,
+                  title: context.l10n.markAllAsReadTitle,
+                  message: context.l10n.markAllAsReadConfirm,
+                  confirmText: context.l10n.confirm,
+                  cancelText: context.l10n.cancel,
+                );
+                if (confirmed == true) {
+                  await controller.markAllAsRead();
+                }
+              },
+              child: Text(context.l10n.markAllRead),
             );
           }),
         ],
@@ -37,43 +50,38 @@ class NotificationsScreen extends GetView<NotificationController> {
             child: Obx(() {
               final state = controller.state.value;
 
-              if (state is LoadingState) {
-                return const Center(child: CircularProgressIndicator());
+              if (state is LoadingState && controller.notifications.isEmpty) {
+                return const CardListSkeleton(itemCount: 5, cardHeight: 80);
               }
 
-              if (state is ErrorState) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.error_outline, size: 48.sp, color: theme.colorScheme.error),
-                      SizedBox(height: 12.h),
-                      Text(state.message, style: theme.textTheme.bodyMedium),
-                      SizedBox(height: 12.h),
-                      ElevatedButton(
-                        onPressed: () => controller.fetchNotifications(isRefresh: true),
-                        child: const Text('Retry'),
-                      ),
-                    ],
-                  ),
+              if (state is ErrorState && controller.notifications.isEmpty) {
+                return EmptyStateWidget(
+                  icon: Icons.error_outline,
+                  title: 'Unable to load notifications',
+                  message: state.message,
+                  actionLabel: 'Retry',
+                  onAction: () => controller.fetchNotifications(isRefresh: true),
+                  iconColor: Theme.of(context).colorScheme.error,
                 );
               }
 
               final list = controller.notifications;
               if (list.isEmpty) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.notifications_none, size: 56.sp, color: theme.disabledColor),
-                      SizedBox(height: 12.h),
-                      Text(
-                        'No notifications yet',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          color: theme.disabledColor,
-                        ),
+                return RefreshIndicator(
+                  onRefresh: () async {
+                    await controller.fetchUnreadCount();
+                    await controller.fetchNotifications(isRefresh: true);
+                  },
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: SizedBox(
+                      height: 400.h,
+                      child: const EmptyStateWidget(
+                        icon: Icons.notifications_none,
+                        title: 'No notifications yet',
+                        message: 'You have caught up with all building notices and account updates.',
                       ),
-                    ],
+                    ),
                   ),
                 );
               }

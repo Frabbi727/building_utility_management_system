@@ -1,5 +1,6 @@
 import 'package:building_utility_management_system/core/base/view_state.dart';
 import 'package:building_utility_management_system/core/localization/app_localizations.dart';
+import 'package:building_utility_management_system/core/widgets/shimmer_loading.dart';
 import 'package:building_utility_management_system/features/dashboard/domain/entities/dashboard_data_entity.dart';
 import 'package:building_utility_management_system/features/dashboard/domain/entities/latest_bill_entity.dart';
 import 'package:building_utility_management_system/features/dashboard/domain/entities/notice_snippet_entity.dart';
@@ -103,12 +104,12 @@ void main() {
     );
   }
 
-  testWidgets('shows CircularProgressIndicator when state is LoadingState',
+  testWidgets('shows DashboardSkeleton when state is LoadingState',
       (tester) async {
     controller.state.value = const LoadingState();
 
     await tester.pumpWidget(buildTestWidget());
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.byType(DashboardSkeleton), findsOneWidget);
   });
 
   testWidgets('shows error message and retry button when state is ErrorState',

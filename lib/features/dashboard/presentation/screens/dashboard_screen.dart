@@ -3,6 +3,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../../../../core/base/view_state.dart';
 import '../../../../core/localization/l10n_ext.dart';
+import '../../../../core/widgets/empty_state_widget.dart';
+import '../../../../core/widgets/shimmer_loading.dart';
 import '../../domain/entities/dashboard_data_entity.dart';
 import '../controllers/dashboard_controller.dart';
 import '../widgets/balance_hero_card.dart';
@@ -18,43 +20,22 @@ class DashboardScreen extends GetView<DashboardController> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
       body: Obx(() {
         final currentState = controller.state.value;
 
         if (currentState is LoadingState) {
-          return const Center(child: CircularProgressIndicator());
+          return const DashboardSkeleton();
         }
 
         if (currentState is ErrorState) {
-          return Center(
-            child: Padding(
-              padding: EdgeInsets.all(24.r),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.error_outline,
-                    size: 48.sp,
-                    color: theme.colorScheme.error,
-                  ),
-                  SizedBox(height: 12.h),
-                  Text(
-                    currentState.message,
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.bodyMedium,
-                  ),
-                  SizedBox(height: 16.h),
-                  ElevatedButton.icon(
-                    onPressed: controller.refreshDashboard,
-                    icon: const Icon(Icons.refresh),
-                    label: Text(context.l10n.retry),
-                  ),
-                ],
-              ),
-            ),
+          return EmptyStateWidget(
+            icon: Icons.cloud_off_outlined,
+            title: 'Unable to load dashboard',
+            message: currentState.message,
+            actionLabel: context.l10n.retry,
+            onAction: controller.refreshDashboard,
+            iconColor: Theme.of(context).colorScheme.error,
           );
         }
 
@@ -101,7 +82,7 @@ class DashboardScreen extends GetView<DashboardController> {
           );
         }
 
-        return const Center(child: CircularProgressIndicator());
+        return const DashboardSkeleton();
       }),
     );
   }

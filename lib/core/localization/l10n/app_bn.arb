@@ -121,5 +121,9 @@
   "roleOwner": "মালিক",
   "roleTenant": "ভাড়াটিয়া",
   "settings": "সেটিংস",
-  "fieldRequired": "এই তথ্যটি পূরণ করা আবশ্যক"
+  "fieldRequired": "এই তথ্যটি পূরণ করা আবশ্যক",
+  "markAllRead": "সব পঠিত চিহ্নিত করুন",
+  "markAllAsReadTitle": "সব পঠিত হিসেবে চিহ্নিত করবেন?",
+  "markAllAsReadConfirm": "আপনি কি নিশ্চিত যে সমস্ত নোটিফিকেশন পঠিত হিসেবে চিহ্নিত করতে চান?",
+  "markRead": "চিহ্নিত করুন"
 }

@@ -3,6 +3,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../../../../core/base/view_state.dart';
 import '../../../../core/localization/l10n_ext.dart';
+import '../../../../core/widgets/empty_state_widget.dart';
+import '../../../../core/widgets/shimmer_loading.dart';
 import '../controllers/bills_controller.dart';
 import '../widgets/bill_card.dart';
 
@@ -11,8 +13,6 @@ class BillsScreen extends GetView<BillsController> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     final filters = [
       {'key': 'all', 'label': context.l10n.all},
       {'key': 'unpaid', 'label': context.l10n.statusUnpaid},
@@ -56,53 +56,36 @@ class BillsScreen extends GetView<BillsController> {
             child: Obx(() {
               final state = controller.state.value;
 
-              if (state is LoadingState) {
-                return const Center(child: CircularProgressIndicator());
+              if (state is LoadingState && controller.bills.isEmpty) {
+                return const CardListSkeleton(itemCount: 4, cardHeight: 110);
               }
 
-              if (state is ErrorState) {
-                return Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(24.r),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.error_outline, size: 48.sp, color: theme.colorScheme.error),
-                        SizedBox(height: 12.h),
-                        Text(state.message, textAlign: TextAlign.center),
-                        SizedBox(height: 16.h),
-                        ElevatedButton.icon(
-                          onPressed: controller.refreshBills,
-                          icon: const Icon(Icons.refresh),
-                          label: Text(context.l10n.retry),
-                        ),
-                      ],
-                    ),
-                  ),
+              if (state is ErrorState && controller.bills.isEmpty) {
+                return EmptyStateWidget(
+                  icon: Icons.error_outline,
+                  title: 'Unable to load bills',
+                  message: state.message,
+                  actionLabel: context.l10n.retry,
+                  onAction: controller.refreshBills,
+                  iconColor: Theme.of(context).colorScheme.error,
                 );
               }
 
               final bills = controller.bills;
               if (bills.isEmpty) {
-                return Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(24.r),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.receipt_long_outlined,
-                          size: 56.sp,
-                          color: theme.colorScheme.primary.withValues(alpha: 0.4),
-                        ),
-                        SizedBox(height: 12.h),
-                        Text(
-                          context.l10n.noBillsFound,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
+                return RefreshIndicator(
+                  onRefresh: controller.refreshBills,
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: SizedBox(
+                      height: 400.h,
+                      child: EmptyStateWidget(
+                        icon: Icons.receipt_long_outlined,
+                        title: context.l10n.noBillsFound,
+                        message: 'No bills match the selected status filter.',
+                        actionLabel: context.l10n.retry,
+                        onAction: controller.refreshBills,
+                      ),
                     ),
                   ),
                 );

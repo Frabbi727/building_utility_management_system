@@ -373,4 +373,17 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get fieldRequired => 'এই তথ্যটি পূরণ করা আবশ্যক';
+
+  @override
+  String get markAllRead => 'সব পঠিত চিহ্নিত করুন';
+
+  @override
+  String get markAllAsReadTitle => 'সব পঠিত হিসেবে চিহ্নিত করবেন?';
+
+  @override
+  String get markAllAsReadConfirm =>
+      'আপনি কি নিশ্চিত যে সমস্ত নোটিফিকেশন পঠিত হিসেবে চিহ্নিত করতে চান?';
+
+  @override
+  String get markRead => 'চিহ্নিত করুন';
 }

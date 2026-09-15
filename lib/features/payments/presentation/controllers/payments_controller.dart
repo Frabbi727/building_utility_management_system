@@ -4,6 +4,9 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/base/view_state.dart';
 import '../../../../shared/domain/entities/flat_entity.dart';
 import '../../../../shared/services/flat_context_service.dart';
+import '../../../bills/presentation/controllers/bills_controller.dart';
+import '../../../dashboard/presentation/controllers/dashboard_controller.dart';
+import '../../../navigation/presentation/controllers/navigation_controller.dart';
 import '../../domain/entities/payment_entity.dart';
 import '../../domain/entities/payment_submission_entity.dart';
 import '../../domain/usecases/get_payment_submissions_usecase.dart';
@@ -23,7 +26,9 @@ class PaymentsController extends GetxController {
   final RxList<PaymentEntity> payments = <PaymentEntity>[].obs;
   final RxList<PaymentSubmissionEntity> submissions = <PaymentSubmissionEntity>[].obs;
   final RxBool isSubmitting = false.obs;
+  final RxBool isRefreshing = false.obs;
 
+  int? _lastLoadedFlatId;
   StreamSubscription<FlatEntity?>? _flatSubscription;
 
   PaymentsController({
@@ -33,37 +38,74 @@ class PaymentsController extends GetxController {
     required this.flatService,
   });
 
+  int? get lastLoadedFlatId => _lastLoadedFlatId;
+  bool get hasLoadedCurrentFlat =>
+      _lastLoadedFlatId != null && _lastLoadedFlatId == flatService.selectedFlat.value?.id;
+
   @override
   void onInit() {
     super.onInit();
     _flatSubscription = flatService.selectedFlat.listen((flat) {
       if (flat != null) {
-        loadData(flatId: flat.id);
+        if (_isPaymentsTabActive()) {
+          loadData(flatId: flat.id);
+        } else {
+          _lastLoadedFlatId = null;
+        }
       }
     });
 
     final currentFlat = flatService.selectedFlat.value;
-    if (currentFlat != null) {
+    if (currentFlat != null && _isPaymentsTabActive()) {
       loadData(flatId: currentFlat.id);
     }
+  }
+
+  bool _isPaymentsTabActive() {
+    if (Get.isRegistered<NavigationController>()) {
+      return Get.find<NavigationController>().currentIndex.value == 2;
+    }
+    return false;
+  }
+
+  void onTabVisible() {
+    final currentFlat = flatService.selectedFlat.value;
+    if (currentFlat != null && _lastLoadedFlatId != currentFlat.id) {
+      loadData(flatId: currentFlat.id);
+    }
+  }
+
+  void invalidateCache() {
+    _lastLoadedFlatId = null;
   }
 
   void changeTab(int index) {
     selectedTabIndex.value = index;
   }
 
-  Future<void> loadData({required int flatId}) async {
+  Future<void> loadData({required int flatId, bool isRefresh = false}) async {
+    if (isRefresh) {
+      isRefreshing.value = true;
+    }
     await Future.wait([
-      loadPayments(flatId: flatId),
-      loadSubmissions(flatId: flatId),
+      loadPayments(flatId: flatId, isRefresh: isRefresh),
+      loadSubmissions(flatId: flatId, isRefresh: isRefresh),
     ]);
+    _lastLoadedFlatId = flatId;
+    isRefreshing.value = false;
   }
 
-  Future<void> loadPayments({required int flatId}) async {
-    paymentsState.value = const LoadingState();
+  Future<void> loadPayments({required int flatId, bool isRefresh = false}) async {
+    if (payments.isEmpty || !isRefresh) {
+      paymentsState.value = const LoadingState();
+    }
     final result = await getPaymentsUseCase(flatId: flatId);
     result.fold(
-      (failure) => paymentsState.value = ErrorState(failure.message),
+      (failure) {
+        if (payments.isEmpty) {
+          paymentsState.value = ErrorState(failure.message);
+        }
+      },
       (data) {
         payments.assignAll(data);
         paymentsState.value = SuccessState<List<PaymentEntity>>(data);
@@ -71,11 +113,17 @@ class PaymentsController extends GetxController {
     );
   }
 
-  Future<void> loadSubmissions({required int flatId}) async {
-    submissionsState.value = const LoadingState();
+  Future<void> loadSubmissions({required int flatId, bool isRefresh = false}) async {
+    if (submissions.isEmpty || !isRefresh) {
+      submissionsState.value = const LoadingState();
+    }
     final result = await getSubmissionsUseCase(flatId: flatId);
     result.fold(
-      (failure) => submissionsState.value = ErrorState(failure.message),
+      (failure) {
+        if (submissions.isEmpty) {
+          submissionsState.value = ErrorState(failure.message);
+        }
+      },
       (data) {
         submissions.assignAll(data);
         submissionsState.value = SuccessState<List<PaymentSubmissionEntity>>(data);
@@ -86,7 +134,7 @@ class PaymentsController extends GetxController {
   Future<void> refreshAll() async {
     final currentFlat = flatService.selectedFlat.value;
     if (currentFlat != null) {
-      await loadData(flatId: currentFlat.id);
+      await loadData(flatId: currentFlat.id, isRefresh: true);
     }
   }
 
@@ -123,6 +171,15 @@ class PaymentsController extends GetxController {
         submissionsState.value =
             SuccessState<List<PaymentSubmissionEntity>>(List.from(submissions));
         selectedTabIndex.value = 1; // switch to Submissions tab to show new item
+
+        // Invalidate dashboard and bills caches to ensure synchronization
+        if (Get.isRegistered<DashboardController>()) {
+          Get.find<DashboardController>().refreshDashboard();
+        }
+        if (Get.isRegistered<BillsController>()) {
+          Get.find<BillsController>().invalidateCache();
+        }
+
         return true;
       },
     );

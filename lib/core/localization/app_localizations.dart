@@ -829,6 +829,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This field is required'**
   String get fieldRequired;
+
+  /// No description provided for @markAllRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark all read'**
+  String get markAllRead;
+
+  /// No description provided for @markAllAsReadTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark All as Read'**
+  String get markAllAsReadTitle;
+
+  /// No description provided for @markAllAsReadConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to mark all notifications as read?'**
+  String get markAllAsReadConfirm;
+
+  /// No description provided for @markRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark Read'**
+  String get markRead;
 }
 
 class _AppLocalizationsDelegate

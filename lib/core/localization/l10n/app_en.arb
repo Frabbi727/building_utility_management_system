@@ -121,5 +121,9 @@
   "roleOwner": "Owner",
   "roleTenant": "Tenant",
   "settings": "Settings",
-  "fieldRequired": "This field is required"
+  "fieldRequired": "This field is required",
+  "markAllRead": "Mark all read",
+  "markAllAsReadTitle": "Mark All as Read",
+  "markAllAsReadConfirm": "Are you sure you want to mark all notifications as read?",
+  "markRead": "Mark Read"
 }

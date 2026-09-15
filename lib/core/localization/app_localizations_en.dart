@@ -373,4 +373,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fieldRequired => 'This field is required';
+
+  @override
+  String get markAllRead => 'Mark all read';
+
+  @override
+  String get markAllAsReadTitle => 'Mark All as Read';
+
+  @override
+  String get markAllAsReadConfirm =>
+      'Are you sure you want to mark all notifications as read?';
+
+  @override
+  String get markRead => 'Mark Read';
 }
