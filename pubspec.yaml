@@ -1,7 +1,7 @@
 name: building_utility_management_system
 description: "Production Building Utility Management System built on Flutter Clean Architecture."
 publish_to: 'none'
-version: 1.0.1+3
+version: 1.0.1+4
 
 environment:
   sdk: ^3.12.2
