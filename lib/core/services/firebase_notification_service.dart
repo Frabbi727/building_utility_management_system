@@ -54,6 +54,11 @@ class FirebaseNotificationService extends GetxService {
       await _requestPermissions();
       _setupMessageListeners();
 
+      final fcmToken = await FirebaseMessaging.instance.getToken();
+      debugPrint('========================================================');
+      debugPrint('🔥 FCM REGISTRATION TOKEN: $fcmToken');
+      debugPrint('========================================================');
+
       _isInitialized = true;
       debugPrint('FirebaseNotificationService initialized successfully');
     } catch (e) {

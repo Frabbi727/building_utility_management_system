@@ -9,7 +9,7 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get appName => 'Building Utility Management';
+  String get appName => 'Utility Notes';
 
   @override
   String get loginTitle => 'Sign In';

@@ -101,7 +101,7 @@ abstract class AppLocalizations {
   /// No description provided for @appName.
   ///
   /// In en, this message translates to:
-  /// **'Building Utility Management'**
+  /// **'Utility Notes'**
   String get appName;
 
   /// No description provided for @loginTitle.
