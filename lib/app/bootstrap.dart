@@ -7,6 +7,7 @@ import '../firebase_options.dart';
 import '../core/network/dio_client.dart';
 import '../core/network/network_info.dart';
 import '../core/routing/route_names.dart';
+import '../core/services/app_update_service.dart';
 import '../core/services/firebase_auth_service.dart';
 import '../core/services/firebase_notification_service.dart';
 import '../core/services/firestore_service.dart';
@@ -94,6 +95,9 @@ Future<void> bootstrap() async {
   Get.put<FirebaseAuthService>(FirebaseAuthService(), permanent: true);
   Get.put<FirestoreService>(FirestoreService(), permanent: true);
 
+  final updateService = Get.put<AppUpdateService>(AppUpdateService(), permanent: true);
+  await updateService.init();
+
   final notificationService = Get.put<FirebaseNotificationService>(
     FirebaseNotificationService(
       storageService: secureStorage,
@@ -103,4 +107,8 @@ Future<void> bootstrap() async {
   await notificationService.init();
 
   runApp(const MainApp());
+
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    updateService.checkForUpdates();
+  });
 }
