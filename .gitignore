@@ -51,3 +51,6 @@ app.*.map.json
 assets/env/*.env
 !assets/env/.gitkeep
 !.env.example
+*.jks
+*.keystore
+**/android/key.properties

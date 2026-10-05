@@ -12,7 +12,7 @@ Future<void> main() async {
   AppFlavor.initialize(
     env: FlavorEnvironment.dev,
     apiBaseUrl: apiBaseUrl,
-    title: 'Building Utility Management (Dev)',
+    title: 'Utility Notes (Dev)',
   );
   await bootstrap();
 }

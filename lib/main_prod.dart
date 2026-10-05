@@ -5,7 +5,7 @@ Future<void> main() async {
   AppFlavor.initialize(
     env: FlavorEnvironment.prod,
     apiBaseUrl: 'https://api.example.com',
-    title: 'Building Utility Management',
+    title: 'Utility Notes',
   );
   await bootstrap();
 }
