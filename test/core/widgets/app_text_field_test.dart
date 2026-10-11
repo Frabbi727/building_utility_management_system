@@ -178,5 +178,25 @@ void main() {
       expect(tester.widget<TextField>(textFieldFinder).obscureText, isTrue);
       expect(find.descendant(of: toggleFinder, matching: find.byIcon(Icons.visibility_off)), findsOneWidget);
     });
+
+    testWidgets('custom suffixIcon overrides toggle button when isPassword is true', (tester) async {
+      await tester.pumpWidget(
+        ScreenUtilInit(
+          designSize: const Size(375, 812),
+          builder: (context, _) => const MaterialApp(
+            home: Scaffold(
+              body: AppTextField(
+                labelText: 'Password',
+                isPassword: true,
+                suffixIcon: Icon(Icons.star),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.byIcon(Icons.star), findsOneWidget);
+      expect(find.byKey(const Key('password_visibility_toggle')), findsNothing);
+    });
   });
 }

@@ -120,5 +120,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.widget<TextField>(innerTextFieldFinder).obscureText, isFalse);
+
+    await tester.tap(toggleButton);
+    await tester.pumpAndSettle();
+
+    expect(tester.widget<TextField>(innerTextFieldFinder).obscureText, isTrue);
   });
 }
