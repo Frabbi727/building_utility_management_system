@@ -99,4 +99,26 @@ void main() {
     verify(() => mockLoginUseCase(email: 'user@example.com', password: 'password123')).called(1);
     expect(find.text('Home'), findsOneWidget);
   });
+
+  testWidgets('toggles password visibility when toggle icon is clicked', (tester) async {
+    await tester.pumpWidget(buildTestWidget());
+    await tester.pumpAndSettle();
+
+    final passwordField = find.byKey(const Key('password_field'));
+    expect(passwordField, findsOneWidget);
+
+    final innerTextFieldFinder = find.descendant(
+      of: passwordField,
+      matching: find.byType(TextField),
+    );
+    expect(tester.widget<TextField>(innerTextFieldFinder).obscureText, isTrue);
+
+    final toggleButton = find.byKey(const Key('password_visibility_toggle'));
+    expect(toggleButton, findsOneWidget);
+
+    await tester.tap(toggleButton);
+    await tester.pumpAndSettle();
+
+    expect(tester.widget<TextField>(innerTextFieldFinder).obscureText, isFalse);
+  });
 }

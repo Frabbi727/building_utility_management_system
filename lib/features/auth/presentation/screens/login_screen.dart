@@ -55,7 +55,7 @@ class LoginScreen extends GetView<AuthController> {
                       AppTextField(
                         key: const Key('password_field'),
                         controller: controller.passwordController,
-                        obscureText: true,
+                        isPassword: true,
                         labelText: context.l10n.passwordLabel,
                       ),
                       SizedBox(height: 24.h),
