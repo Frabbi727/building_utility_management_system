@@ -9,7 +9,9 @@ part of 'bill_model.dart';
 BillModel _$BillModelFromJson(Map<String, dynamic> json) => BillModel(
   id: (json['id'] as num).toInt(),
   billNo: json['bill_no'] as String,
+  title: json['title'] as String?,
   billingMonth: json['billing_month'] as String,
+  billingMonthFormatted: json['billing_month_formatted'] as String?,
   totalAmount: json['total_amount'],
   monthCharges: json['month_charges'],
   arrears: json['arrears'],
@@ -24,7 +26,9 @@ BillModel _$BillModelFromJson(Map<String, dynamic> json) => BillModel(
 Map<String, dynamic> _$BillModelToJson(BillModel instance) => <String, dynamic>{
   'id': instance.id,
   'bill_no': instance.billNo,
+  'title': instance.title,
   'billing_month': instance.billingMonth,
+  'billing_month_formatted': instance.billingMonthFormatted,
   'total_amount': instance.totalAmount,
   'month_charges': instance.monthCharges,
   'arrears': instance.arrears,

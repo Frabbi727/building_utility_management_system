@@ -80,24 +80,37 @@ class LatestBillCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    bill.billNo,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      bill.displayTitle,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                  SizedBox(height: 2.h),
-                  Text(
-                    '${bill.billingMonth} • ${context.l10n.dueDate}: ${bill.dueDate}',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                    SizedBox(height: 2.h),
+                    Text(
+                      bill.billNo,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                  ),
-                ],
+                    SizedBox(height: 1.h),
+                    Text(
+                      '${bill.billingMonthFormatted ?? bill.billingMonth} • ${context.l10n.dueDate}: ${bill.dueDate}',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
               ),
+              SizedBox(width: 8.w),
               Text(
                 '৳ ${bill.totalAmount}',
                 style: theme.textTheme.titleLarge?.copyWith(

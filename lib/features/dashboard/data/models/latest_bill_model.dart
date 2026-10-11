@@ -12,8 +12,13 @@ class LatestBillModel extends Equatable {
   @JsonKey(name: 'bill_no')
   final String billNo;
 
+  final String? title;
+
   @JsonKey(name: 'billing_month')
   final String billingMonth;
+
+  @JsonKey(name: 'billing_month_formatted')
+  final String? billingMonthFormatted;
 
   @JsonKey(name: 'total_amount', fromJson: _stringFromDynamic)
   final String totalAmount;
@@ -34,7 +39,9 @@ class LatestBillModel extends Equatable {
   const LatestBillModel({
     required this.id,
     required this.billNo,
+    this.title,
     required this.billingMonth,
+    this.billingMonthFormatted,
     required this.totalAmount,
     required this.dueDate,
     required this.status,
@@ -48,7 +55,9 @@ class LatestBillModel extends Equatable {
   LatestBillEntity toEntity() => LatestBillEntity(
         id: id,
         billNo: billNo,
+        title: title,
         billingMonth: billingMonth,
+        billingMonthFormatted: billingMonthFormatted,
         totalAmount: totalAmount,
         dueDate: dueDate,
         status: status,
@@ -58,7 +67,9 @@ class LatestBillModel extends Equatable {
   List<Object?> get props => [
         id,
         billNo,
+        title,
         billingMonth,
+        billingMonthFormatted,
         totalAmount,
         dueDate,
         status,

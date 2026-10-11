@@ -9,8 +9,11 @@ class BillModel {
   final int id;
   @JsonKey(name: 'bill_no')
   final String billNo;
+  final String? title;
   @JsonKey(name: 'billing_month')
   final String billingMonth;
+  @JsonKey(name: 'billing_month_formatted')
+  final String? billingMonthFormatted;
   @JsonKey(name: 'total_amount')
   final dynamic totalAmount;
   @JsonKey(name: 'month_charges')
@@ -26,7 +29,9 @@ class BillModel {
   const BillModel({
     required this.id,
     required this.billNo,
+    this.title,
     required this.billingMonth,
+    this.billingMonthFormatted,
     required this.totalAmount,
     this.monthCharges,
     this.arrears,
@@ -44,7 +49,9 @@ class BillModel {
   BillEntity toEntity() => BillEntity(
         id: id,
         billNo: billNo,
+        title: title,
         billingMonth: billingMonth,
+        billingMonthFormatted: billingMonthFormatted,
         totalAmount: totalAmount?.toString() ?? '0.00',
         monthCharges: monthCharges?.toString(),
         arrears: arrears?.toString(),

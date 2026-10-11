@@ -120,18 +120,21 @@ class _BillDetailsScreenState extends State<BillDetailsScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              _currentBill.billingMonth,
-                              style: theme.textTheme.headlineSmall?.copyWith(
-                                fontWeight: FontWeight.bold,
+                            Expanded(
+                              child: Text(
+                                _currentBill.displayTitle,
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
+                            SizedBox(width: 8.w),
                             BillStatusChip(status: _currentBill.status),
                           ],
                         ),
                         SizedBox(height: 4.h),
                         Text(
-                          _currentBill.billNo,
+                          '${_currentBill.billNo} • ${_currentBill.billingMonthFormatted ?? _currentBill.billingMonth}',
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
