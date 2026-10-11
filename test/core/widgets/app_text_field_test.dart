@@ -136,5 +136,47 @@ void main() {
       expect(isAfterInputValid, isTrue);
       expect(find.text('Field cannot be empty'), findsNothing);
     });
+
+    testWidgets('isPassword: true renders toggle icon and toggles obscureText', (tester) async {
+      await tester.pumpWidget(
+        ScreenUtilInit(
+          designSize: const Size(375, 812),
+          builder: (context, _) => const MaterialApp(
+            home: Scaffold(
+              body: AppTextField(
+                labelText: 'Password',
+                isPassword: true,
+              ),
+            ),
+          ),
+        ),
+      );
+
+      // Verify initially obscured
+      final textFieldFinder = find.descendant(
+        of: find.byType(TextFormField),
+        matching: find.byType(TextField),
+      );
+      expect(tester.widget<TextField>(textFieldFinder).obscureText, isTrue);
+
+      // Verify toggle button with visibility_off icon exists
+      final toggleFinder = find.byKey(const Key('password_visibility_toggle'));
+      expect(toggleFinder, findsOneWidget);
+      expect(find.descendant(of: toggleFinder, matching: find.byIcon(Icons.visibility_off)), findsOneWidget);
+
+      // Tap toggle button to show password
+      await tester.tap(toggleFinder);
+      await tester.pumpAndSettle();
+
+      expect(tester.widget<TextField>(textFieldFinder).obscureText, isFalse);
+      expect(find.descendant(of: toggleFinder, matching: find.byIcon(Icons.visibility)), findsOneWidget);
+
+      // Tap toggle button again to hide password
+      await tester.tap(toggleFinder);
+      await tester.pumpAndSettle();
+
+      expect(tester.widget<TextField>(textFieldFinder).obscureText, isTrue);
+      expect(find.descendant(of: toggleFinder, matching: find.byIcon(Icons.visibility_off)), findsOneWidget);
+    });
   });
 }
