@@ -152,12 +152,14 @@ void main() {
         ),
       );
 
-      // Verify initially obscured
+      // Verify initially obscured and suggestions/autocorrect disabled
       final textFieldFinder = find.descendant(
         of: find.byType(TextFormField),
         matching: find.byType(TextField),
       );
       expect(tester.widget<TextField>(textFieldFinder).obscureText, isTrue);
+      expect(tester.widget<TextField>(textFieldFinder).enableSuggestions, isFalse);
+      expect(tester.widget<TextField>(textFieldFinder).autocorrect, isFalse);
 
       // Verify toggle button with visibility_off icon exists
       final toggleFinder = find.byKey(const Key('password_visibility_toggle'));
@@ -169,6 +171,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(tester.widget<TextField>(textFieldFinder).obscureText, isFalse);
+      expect(tester.widget<TextField>(textFieldFinder).enableSuggestions, isFalse);
+      expect(tester.widget<TextField>(textFieldFinder).autocorrect, isFalse);
       expect(find.descendant(of: toggleFinder, matching: find.byIcon(Icons.visibility)), findsOneWidget);
 
       // Tap toggle button again to hide password

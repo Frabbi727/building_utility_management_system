@@ -65,6 +65,8 @@ class _AppTextFieldState extends State<AppTextField> {
     return TextFormField(
       controller: widget.controller,
       obscureText: widget.isPassword ? _obscureText : widget.obscureText,
+      enableSuggestions: !widget.isPassword,
+      autocorrect: !widget.isPassword,
       keyboardType: widget.keyboardType,
       textInputAction: widget.textInputAction,
       onChanged: widget.onChanged,
@@ -78,4 +80,3 @@ class _AppTextFieldState extends State<AppTextField> {
     );
   }
 }
-
